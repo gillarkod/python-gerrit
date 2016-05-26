@@ -31,7 +31,9 @@ class Connection(object):
         if auth_id is None and auth_pw is None:
             netrc_auth = get_netrc_auth(self._url)
             if not netrc_auth:
-                raise GerritError.CredentialsNotFound("No Credentials for %s found in .netrc" % self._url)
+                raise GerritError.CredentialsNotFound(
+                    "No Credentials for %s found in .netrc" %
+                    self._url)
 
             auth_id, auth_pw = netrc_auth
 
@@ -58,7 +60,7 @@ class Connection(object):
                                   auth=self._auth,
                                   headers=self._requests_headers,
                                   json=r_payload
-                                  )
+                                 )
         return req
 
     def debug(self):
