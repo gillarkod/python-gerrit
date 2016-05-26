@@ -1,3 +1,10 @@
+"""
+Connection
+==========
+
+Set up connection to gerrit
+"""
+
 import requests
 from requests.auth import HTTPBasicAuth
 from requests.utils import get_netrc_auth
@@ -6,6 +13,8 @@ from Gerrit.error import GerritError
 
 
 class Connection(object):
+    """Set up connection to gerrit"""
+
     def __init__(self, url, auth_id=None, auth_pw=None, debug=True):
         # Should we print out the messages?
         # Default is yes, but for testing we can set this to False
@@ -32,6 +41,14 @@ class Connection(object):
         self._auth = HTTPBasicAuth(auth_id, auth_pw)
 
     def call(self, request='get', r_endpoint=None, r_payload=None, ):
+        """
+        Send request to gerrit.
+
+        request needs to be either get, post or delete
+
+        Returns a requests Response object
+        """
+
         request_do = {
             'get': requests.get,
             'post': requests.post,
@@ -45,4 +62,6 @@ class Connection(object):
         return req
 
     def debug(self):
+        """Get debug status"""
+
         return self._debug
