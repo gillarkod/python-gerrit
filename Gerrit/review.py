@@ -1,8 +1,17 @@
+"""
+Review
+======
+
+Manage gerrit reviews
+"""
+
 from Gerrit.error import GerritError
 from Gerrit import decode_json
 
 
 class Review(object):
+    """Manage gerrit reviews"""
+
     def __init__(self, gerrit_con, change_id, revision_id):
         # HTTP REST API HEADERS
         self._change_id = change_id
@@ -22,7 +31,8 @@ class Review(object):
             labels = {}
         if not comments:
             comments = {}
-        r_endpoint = "/a/changes/%s/revisions/%s/review" % (self._change_id, self._revision_id)
+        r_endpoint = "/a/changes/%s/revisions/%s/review" % (self._change_id,
+                                                            self._revision_id)
         payload = {}
 
         if labels:
@@ -35,7 +45,7 @@ class Review(object):
         req = self._gerrit_con.call(request='post',
                                     r_endpoint=r_endpoint,
                                     r_payload=payload
-                                    )
+                                   )
 
         status_code = req.status_code
         if status_code == 200:
@@ -53,7 +63,7 @@ class Review(object):
         req = self._gerrit_con.call(request='post',
                                     r_endpoint=r_endpoint,
                                     r_payload=payload
-                                    )
+                                   )
 
         result = req.content.decode('utf-8')
 
@@ -62,10 +72,10 @@ class Review(object):
 
         # If the above doesn't match then it should be json data we get.
         json_result = decode_json(result)
-        empty_response = {'reviewers': []}
 
         if len(json_result.get('reviewers', False)) == 0:
-            raise GerritError.AlreadyExists('The requested user \'%s\' is already an reviewer' % account_id)
+            raise GerritError.AlreadyExists('The requested user \'%s\' is \
+                already an reviewer' % account_id)
         elif len(json_result.get('reviewers', False)) >= 1:
             return True
         else:
@@ -83,7 +93,7 @@ class Review(object):
 
         req = self._gerrit_con.call(request='delete',
                                     r_endpoint=r_endpoint
-                                    )
+                                   )
 
         status_code = req.status_code
         result = req.content.decode('utf-8')
