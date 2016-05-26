@@ -1,6 +1,7 @@
 python-gerrit
 =============
 [![Build Status](https://travis-ci.org/propyless/python-gerrit.svg?branch=master)](https://travis-ci.org/propyless/python-gerrit)
+[![python-gerrit on discord](https://img.shields.io/badge/discord-general@python--gerrit-738bd7.svg?style=flat)](https://discord.gg/012Ch20uOuaAtn5su)
 
 Python module that uses the Gerrit REST API as an interface to manage changes, users, groups, and more.
 
