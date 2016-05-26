@@ -1,53 +1,5 @@
-import json
-import sys
-
-import requests
-from requests.auth import HTTPBasicAuth
-from requests.utils import get_netrc_auth
-
-
-class Gerrit(object):
-    def __init__(self, url, auth_id=False, auth_pw=False):
-        # HTTP REST API HEADERS
-        self._requests_headers = {
-            'content-type': 'application/json',
-        }
-
-        self._url = url.rstrip('/')
-
-        # Assume netrc file!
-        if not auth_id and not auth_pw:
-            netrc_auth = get_netrc_auth(self._url)
-            if not netrc_auth:
-                print("No credentials in .netrc for %s" % self._url)
-                sys.exit(1)
-            auth_id, auth_pw = netrc_auth
-        self._auth = HTTPBasicAuth(auth_id, auth_pw)
-
-    def call(self, request='get', r_endpoint=None, r_payload=None, ):
-        request_do = {
-            'get': requests.get,
-            'post': requests.post,
-            'delete': requests.delete
-        }
-        req = request_do[request](url=self._url + r_endpoint,
-                                  auth=self._auth,
-                                  headers=self._requests_headers,
-                                  json=r_payload
-                                  )
-        return req
-
-    class UnhandledError(Exception):
-        def __init__(self, message):
-            self._msg = message
-
-    class PermissionError(Exception):
-        def __init__(self, message):
-            self._msg = message
-
-    class AlreadyExists(Exception):
-        def __init__(self, message):
-            self._msg = message
+from Gerrit.error import GerritError
+from Gerrit import decode_json
 
 
 class Review(object):
@@ -56,10 +8,7 @@ class Review(object):
         self._change_id = change_id
         self._revision_id = revision_id
         self._gerrit_con = gerrit_con
-
-    @staticmethod
-    def _decode_json(gerrit_response):
-        return json.loads(gerrit_response.lstrip(')]}\''))
+        self._debug = gerrit_con.debug()
 
     def set_review(self, labels=None, message='', comments=None):
         """
@@ -92,7 +41,7 @@ class Review(object):
         if status_code == 200:
             return True
         else:
-            raise Gerrit.UnhandledError(req.content)
+            raise GerritError.UnhandledError(req.content)
 
     def add_reviewer(self, account_id):
         """
@@ -112,19 +61,23 @@ class Review(object):
             raise LookupError(result)
 
         # If the above doesn't match then it should be json data we get.
-        json_result = self._decode_json(result)
+        json_result = decode_json(result)
         empty_response = {'reviewers': []}
 
         if len(json_result.get('reviewers', False)) == 0:
-            raise Gerrit.AlreadyExists('The requested user \'%s\' is already an reviewer' % account_id)
+            raise GerritError.AlreadyExists('The requested user \'%s\' is already an reviewer' % account_id)
         elif len(json_result.get('reviewers', False)) >= 1:
             return True
         else:
-            raise Gerrit.UnhandledError(json_result)
+            raise GerritError.UnhandledError(json_result)
 
     def remove_reviewer(self, account_id):
         """
         Endpoint to remove a reviewer from a change-id
+        :param account_id: Remove a user with account-id as revewier.
+        :type account_id: str
+        :rtype: bool
+        :exception: error.AuthorizationError
         """
         r_endpoint = "/a/changes/%s/reviewers/%s" % (self._change_id, account_id)
 
@@ -136,7 +89,7 @@ class Review(object):
         result = req.content.decode('utf-8')
 
         if "delete not permitted" in result:
-            raise Gerrit.PermissionError(result)
+            raise GerritError.AuthorizationError(result)
 
         if status_code == 204:
             return True
@@ -157,8 +110,8 @@ class Review(object):
         if status_code == 404:
             raise ValueError(result)
         elif status_code != 200:
-            raise Gerrit.UnhandledError(result)
+            raise GerritError.UnhandledError(result)
 
-        json_result = self._decode_json(result)
+        json_result = decode_json(result)
 
         return json_result
