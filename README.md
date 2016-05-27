@@ -5,9 +5,32 @@ python-gerrit
 
 Python module that uses the Gerrit REST API as an interface to manage changes, users, groups, and more.
 
+# Scope
+The scope of this library is to code stuff when people have a need for it.
+PR's and issues are welcome if they come with unittests and 10/10 pylint.
+
 # Usage
 
 ## Examples
+
+# Structure
+This lib will try to follow the structure the Gerrit API is structured.
+For example:
+```
+/changes/
+  change
+  change edit
+  reviewer
+  revision
+  ids
+  json entities
+/groups/
+  group
+  group member
+  group include
+  ids
+  json entities
+```
 
 ## API Reference
 
