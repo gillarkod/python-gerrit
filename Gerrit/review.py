@@ -13,6 +13,14 @@ class Review(object):
     """Manage gerrit reviews"""
 
     def __init__(self, gerrit_con, change_id, revision_id):
+        """
+        :param gerrit_con: The connection object to Gerrit
+        :type gerrit_con: Gerrit.Connection
+        :param change_id: The Change Request ID
+        :type change_id: str
+        :param revision_id: The Change Request Patch Set/Revision
+        :type revision_id: str
+        """
         # HTTP REST API HEADERS
         self._change_id = change_id
         self._revision_id = revision_id
@@ -22,9 +30,12 @@ class Review(object):
     def set_review(self, labels=None, message='', comments=None):
         """
         Endpoint to create a review for a change_id and a specific patchset
-        :param labels: stuff
-        :param message: stuff
-        :param comments: stuff
+        :param labels: This is used to set +2 Code-Review for example.
+        :type labels: dict
+        :param message: The message will appear in the actually change-request page.
+        :type message: str
+        :param comments: This will become comments in the code.
+        :type comments: dict
         """
 
         if not labels:
@@ -56,6 +67,11 @@ class Review(object):
     def add_reviewer(self, account_id):
         """
         Endpoint for adding a reviewer to a change-id
+        :param account_id: The user account that should be added as a reviewer
+        :type account_id: str
+        :return: You get a True boolean type if the addition of this user was successfull
+        :rtype: bool
+        :except: LookupError, GerritError.AlreadyExists, GerritError.UnhandledError
         """
         r_endpoint = "/a/changes/%s/reviewers" % self._change_id
         payload = {"reviewer": "%s" % account_id}
@@ -109,6 +125,9 @@ class Review(object):
     def get_reviews(self):
         """
         Endpoint to list reviewers for a change-id
+        :returns: The reviews for the specified change-id at init
+        :rtype: dict
+        :exception: ValueError, GerritError.UnhandledError
         """
         r_endpoint = "/a/changes/%s/reviewers/" % self._change_id
 

@@ -16,6 +16,16 @@ class Connection(object):
     """Set up connection to gerrit"""
 
     def __init__(self, url, auth_id=None, auth_pw=None, debug=True):
+        """
+        :param url: URL to the gerrit server
+        :type url: str
+        :param auth_id: Username to authenticate with
+        :type auth_id: str
+        :param auth_pw: Password for username to authenticate with
+        :type auth_pw: str
+        :param debug: Verbosity for the lib
+        :type debug: bool
+        """
         # Should we print out the messages?
         # Default is yes, but for testing we can set this to False
         self._debug = debug
@@ -45,10 +55,15 @@ class Connection(object):
     def call(self, request='get', r_endpoint=None, r_payload=None, ):
         """
         Send request to gerrit.
+        :param request: The type of http request to perform
+        :type request: str
+        :param r_endpoint: The Gerrit REST API endpoint to hit
+        :type r_endpoint: str
+        :param r_payload: The data to send to the specified API endpoint
+        :type r_payload: dict
 
-        request needs to be either get, post or delete
-
-        Returns a requests Response object
+        :return: The http request
+        :rtype: requests.packages.urllib3.response.HTTPResponse
         """
 
         request_do = {
@@ -64,6 +79,10 @@ class Connection(object):
         return req
 
     def debug(self):
-        """Get debug status"""
+        """
+        Get debug status
+        :return: Debug enablement status
+        :rtype: bool
+        """
 
         return self._debug
