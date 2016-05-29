@@ -5,7 +5,11 @@ Review
 Manage gerrit reviews
 """
 
-from Gerrit.error import GerritError
+from Gerrit.error import (
+    UnhandledError,
+    AlreadyExists,
+    AuthorizationError,
+)
 from Gerrit import decode_json
 
 
@@ -62,7 +66,7 @@ class Review(object):
         if status_code == 200:
             return True
         else:
-            raise GerritError.UnhandledError(req.content)
+            raise UnhandledError(req.content)
 
     def add_reviewer(self, account_id):
         """
@@ -71,7 +75,7 @@ class Review(object):
         :type account_id: str
         :return: You get a True boolean type if the addition of this user was successfull
         :rtype: bool
-        :except: LookupError, GerritError.AlreadyExists, GerritError.UnhandledError
+        :except: LookupError, AlreadyExists, UnhandledError
         """
         r_endpoint = "/a/changes/%s/reviewers" % self._change_id
         payload = {"reviewer": "%s" % account_id}
@@ -90,12 +94,12 @@ class Review(object):
         json_result = decode_json(result)
 
         if len(json_result.get('reviewers', False)) == 0:
-            raise GerritError.AlreadyExists('The requested user \'%s\' is \
+            raise AlreadyExists('The requested user \'%s\' is \
                 already an reviewer' % account_id)
         elif len(json_result.get('reviewers', False)) >= 1:
             return True
         else:
-            raise GerritError.UnhandledError(json_result)
+            raise UnhandledError(json_result)
 
     def remove_reviewer(self, account_id):
         """
@@ -115,7 +119,7 @@ class Review(object):
         result = req.content.decode('utf-8')
 
         if "delete not permitted" in result:
-            raise GerritError.AuthorizationError(result)
+            raise AuthorizationError(result)
 
         if status_code == 204:
             return True
@@ -127,7 +131,7 @@ class Review(object):
         Endpoint to list reviewers for a change-id
         :returns: The reviews for the specified change-id at init
         :rtype: dict
-        :exception: ValueError, GerritError.UnhandledError
+        :exception: ValueError, UnhandledError
         """
         r_endpoint = "/a/changes/%s/reviewers/" % self._change_id
 
@@ -139,7 +143,7 @@ class Review(object):
         if status_code == 404:
             raise ValueError(result)
         elif status_code != 200:
-            raise GerritError.UnhandledError(result)
+            raise UnhandledError(result)
 
         json_result = decode_json(result)
 

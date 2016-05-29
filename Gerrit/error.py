@@ -1,16 +1,18 @@
-class GerritError(object):
-    class UnhandledError(Exception):
-        def __init__(self, message):
-            self._msg = message
+"""
+Error
+=====
 
-    class AuthorizationError(Exception):
-        def __init__(self, message):
-            self._msg = message
+Errors for python-gerrit
+"""
 
-    class AlreadyExists(Exception):
-        def __init__(self, message):
-            self._msg = message
+class UnhandledError(Exception):
+    """Raise for unhandled errors"""
 
-    class CredentialsNotFound(Exception):
-        def __init__(self, message):
-            self._msg = message
+class AuthorizationError(Exception):
+    """Raise for when authorization fails"""
+
+class AlreadyExists(Exception):
+    """Raise for when an object already exists"""
+
+class CredentialsNotFound(Exception):
+    """Raise for when an credentials can't be found"""

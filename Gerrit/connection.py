@@ -9,7 +9,9 @@ import requests
 from requests.auth import HTTPBasicAuth
 from requests.utils import get_netrc_auth
 
-from Gerrit.error import GerritError
+from Gerrit.error import (
+    CredentialsNotFound,
+)
 
 
 class Connection(object):
@@ -41,14 +43,14 @@ class Connection(object):
         if auth_id is None and auth_pw is None:
             netrc_auth = get_netrc_auth(self._url)
             if not netrc_auth:
-                raise GerritError.CredentialsNotFound(
+                raise CredentialsNotFound(
                     "No Credentials for %s found in .netrc" %
                     self._url)
 
             auth_id, auth_pw = netrc_auth
 
         if auth_id is None or auth_pw is None:
-            raise GerritError.CredentialsNotFound("Partial credenials given.")
+            raise CredentialsNotFound("Partial credenials given.")
         # We got everything as we expected, create the HTTPBasicAuth object.
         self._auth = HTTPBasicAuth(auth_id, auth_pw)
 
