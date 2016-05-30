@@ -9,7 +9,7 @@ import requests
 from requests.auth import HTTPBasicAuth
 from requests.utils import get_netrc_auth
 
-from Gerrit.error import (
+from gerrit.error import (
     CredentialsNotFound,
 )
 
@@ -59,7 +59,7 @@ class Connection(object):
         Send request to gerrit.
         :param request: The type of http request to perform
         :type request: str
-        :param r_endpoint: The Gerrit REST API endpoint to hit
+        :param r_endpoint: The gerrit REST API endpoint to hit
         :type r_endpoint: str
         :param r_payload: The data to send to the specified API endpoint
         :type r_payload: dict

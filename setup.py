@@ -20,7 +20,7 @@ setup(
     version=get_version(),
     author="propyless@github",
     license='Apache License 2.0',
-    packages=['Gerrit'],
+    packages=['gerrit'],
     include_package_data=True,
     url='https://github.com/propyless/python-gerrit',
     description='python-gerrit is a module that interfaces with Gerrits REST API.',
