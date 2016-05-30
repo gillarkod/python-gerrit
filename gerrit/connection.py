@@ -50,7 +50,7 @@ class Connection(object):
             auth_id, auth_pw = netrc_auth
 
         if auth_id is None or auth_pw is None:
-            raise CredentialsNotFound("Partial credenials given.")
+            raise CredentialsNotFound("Partial credentials given.")
         # We got everything as we expected, create the HTTPBasicAuth object.
         self._auth = HTTPBasicAuth(auth_id, auth_pw)
 

@@ -16,7 +16,7 @@ class GerritConTestCase(unittest.TestCase):
         # Set up mock
         mock_get_netrc_auth.return_value = ('user_found', 'password_found')
 
-        # Instantize gerrit Con
+        # Instantiate gerrit Con
         reference = Connection(url='http://domain.com')
 
         # Make sure get_netrc_auth is called since we have no specified the credentials
@@ -31,7 +31,7 @@ class GerritConTestCase(unittest.TestCase):
 
     @mock.patch('gerrit.connection.get_netrc_auth')
     def test_init_credentials_given(self, mock_get_netrc_auth):
-        # Instantize gerrit Con
+        # Instantiate gerrit Con
         reference = Connection(url='http://domain.com',
                                auth_id='user_given',
                                auth_pw='password_given')
@@ -53,7 +53,7 @@ class GerritConTestCase(unittest.TestCase):
         # Set up mock
         mock_get_netrc_auth.return_value = False
 
-        # Instantize gerrit Con
+        # Instantiate gerrit Con
         with self.assertRaises(CredentialsNotFound):
             reference = Connection(url='http://domain.com')
 
@@ -63,7 +63,7 @@ class GerritConTestCase(unittest.TestCase):
 
     @mock.patch('gerrit.connection.get_netrc_auth')
     def test_init_partialAuth_id_given(self, mock_get_netrc_auth):
-        # Instantize gerrit Con
+        # Instantiate gerrit Con
         with self.assertRaises(CredentialsNotFound):
             reference = Connection(url='http://domain.com',
                                    auth_id='user_given')
@@ -74,7 +74,7 @@ class GerritConTestCase(unittest.TestCase):
 
     @mock.patch('gerrit.connection.get_netrc_auth')
     def test_init_partialAuth_pw_given(self, mock_get_netrc_auth):
-        # Instantize gerrit Con
+        # Instantiate gerrit Con
         with self.assertRaises(CredentialsNotFound):
             reference = Connection(url='http://domain.com',
                                    auth_pw='pass_given')
