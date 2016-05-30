@@ -57,10 +57,11 @@ class Review(object):
         if comments:
             payload['comments'] = comments
 
-        req = self._gerrit_con.call(request='post',
-                                    r_endpoint=r_endpoint,
-                                    r_payload=payload
-                                   )
+        req = self._gerrit_con.call(
+            request='post',
+            r_endpoint=r_endpoint,
+            r_payload=payload
+        )
 
         status_code = req.status_code
         if status_code == 200:
@@ -80,10 +81,11 @@ class Review(object):
         r_endpoint = "/a/changes/%s/reviewers" % self._change_id
         payload = {"reviewer": "%s" % account_id}
 
-        req = self._gerrit_con.call(request='post',
-                                    r_endpoint=r_endpoint,
-                                    r_payload=payload
-                                   )
+        req = self._gerrit_con.call(
+            request='post',
+            r_endpoint=r_endpoint,
+            r_payload=payload
+        )
 
         result = req.content.decode('utf-8')
 
@@ -111,9 +113,10 @@ class Review(object):
         """
         r_endpoint = "/a/changes/%s/reviewers/%s" % (self._change_id, account_id)
 
-        req = self._gerrit_con.call(request='delete',
-                                    r_endpoint=r_endpoint
-                                   )
+        req = self._gerrit_con.call(
+            request='delete',
+            r_endpoint=r_endpoint
+        )
 
         status_code = req.status_code
         result = req.content.decode('utf-8')
