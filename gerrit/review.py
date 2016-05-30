@@ -5,12 +5,12 @@ Review
 Manage gerrit reviews
 """
 
-from Gerrit.error import (
+from gerrit.error import (
     UnhandledError,
     AlreadyExists,
     AuthorizationError,
 )
-from Gerrit import decode_json
+from gerrit import decode_json
 
 
 class Review(object):
@@ -18,8 +18,8 @@ class Review(object):
 
     def __init__(self, gerrit_con, change_id, revision_id):
         """
-        :param gerrit_con: The connection object to Gerrit
-        :type gerrit_con: Gerrit.Connection
+        :param gerrit_con: The connection object to gerrit
+        :type gerrit_con: gerrit.Connection
         :param change_id: The Change Request ID
         :type change_id: str
         :param revision_id: The Change Request Patch Set/Revision
