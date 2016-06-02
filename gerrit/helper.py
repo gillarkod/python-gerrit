@@ -14,11 +14,3 @@ def decode_json(gerrit_response):
     """
 
     return json.loads(gerrit_response.lstrip(')]}\''))
-
-
-def print_message(message, debug=True):
-    """Print debug messages"""
-
-    if debug:
-        print(message)
-
