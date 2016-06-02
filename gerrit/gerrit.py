@@ -7,6 +7,7 @@ Set up connection to gerrit
 
 import requests
 from requests.auth import HTTPBasicAuth
+from requests.auth import HTTPDigestAuth
 from requests.utils import get_netrc_auth
 from gerrit.review import Review
 
@@ -74,6 +75,8 @@ class Gerrit(object):
             self._http_basic_auth(auth_id, auth_pw)
         elif kwargs['auth_method'] == 'basic':
             self._http_basic_auth(auth_id, auth_pw)
+        elif kwargs['auth_method'] == 'digest':
+            self._http_digest_auth(auth_id, auth_pw)
         else:
             raise NotImplementedError(
                 "Authorization method '%s' for auth_type 'http' is not implemented" %
@@ -83,6 +86,10 @@ class Gerrit(object):
     def _http_basic_auth(self, auth_id, auth_pw):
         # We got everything as we expected, create the HTTPBasicAuth object.
         self._auth = HTTPBasicAuth(auth_id, auth_pw)
+
+    def _http_digest_auth(self, auth_id, auth_pw):
+        # We got everything as we expected, create the HTTPDigestAuth object.
+        self._auth = HTTPDigestAuth(auth_id, auth_pw)
 
     def call(self, request='get', r_endpoint=None, r_payload=None, ):
         """
