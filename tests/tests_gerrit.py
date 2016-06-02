@@ -5,8 +5,11 @@ import unittest
 import mock
 
 from gerrit.gerrit import Gerrit
+from gerrit.project import Project
 from gerrit.error import (
     CredentialsNotFound,
+    AlreadyExists,
+    UnhandledError,
 )
 
 
@@ -159,6 +162,55 @@ class GerritConTestCase(unittest.TestCase):
         self.assertFalse(mock_get_netrc_auth.called,
                          'Failed to not call get_netrc_auth if credentials were given.')
 
+
+class GerritProjectTestCase(unittest.TestCase):
+    @mock.patch('gerrit.gerrit.get_netrc_auth')
+    @mock.patch('gerrit.gerrit.requests.put')
+    @mock.patch('gerrit.gerrit.requests.get')
+    def test_create_project(self, mock_get, mock_put, mock_get_netrc_auth):
+        mock_get_netrc_auth.return_value = ('user', 'password')
+        req = mock.Mock()
+        req.status_code = 201
+        mock_put.return_value = req
+
+        get = mock.Mock()
+        get.status_code = 200
+        get.content = ')]}\'{"name": "gerritproject", "parent": "All-Projects", "description": "My gerrit project", "state": "ACTIVE"}'.encode('utf-8')
+        mock_get.return_value = get
+
+        reference = Gerrit(url='http://domain.com')
+        project = reference.create_project('gerritproject')
+        self.assertIsInstance(project, Project)
+        mock_put.assert_called_with(
+            auth=mock.ANY,
+            headers=mock.ANY,
+            json=mock.ANY,
+            url='http://domain.com/a/projects/gerritproject'
+        )
+
+    @mock.patch('gerrit.gerrit.get_netrc_auth')
+    @mock.patch('gerrit.gerrit.requests.put')
+    def test_create_project_exists(self, mock_requests, mock_get_netrc_auth):
+        mock_get_netrc_auth.return_value = ('user', 'password')
+        req = mock.Mock()
+        req.status_code = 409
+        mock_requests.return_value = req
+
+        reference = Gerrit(url='http://domain.com')
+        with self.assertRaises(AlreadyExists):
+            reference.create_project('gerritproject')
+
+    @mock.patch('gerrit.gerrit.get_netrc_auth')
+    @mock.patch('gerrit.gerrit.requests.put')
+    def test_create_project_unknown_error(self, mock_requests, mock_get_netrc_auth):
+        mock_get_netrc_auth.return_value = ('user', 'password')
+        req = mock.Mock()
+        req.status_code = 503
+        mock_requests.return_value = req
+
+        reference = Gerrit(url='http://domain.com')
+        with self.assertRaises(UnhandledError):
+            reference.create_project('gerritproject')
 
 class GerritError(unittest.TestCase):
     """Tests for gerrit/error.py"""

@@ -10,9 +10,12 @@ from requests.auth import HTTPBasicAuth
 from requests.auth import HTTPDigestAuth
 from requests.utils import get_netrc_auth
 from gerrit.review import Review
+from gerrit.project import Project
 
 from gerrit.error import (
     CredentialsNotFound,
+    UnhandledError,
+    AlreadyExists,
 )
 
 
@@ -107,6 +110,7 @@ class Gerrit(object):
 
         request_do = {
             'get': requests.get,
+            'put': requests.put,
             'post': requests.post,
             'delete': requests.delete
         }
@@ -139,3 +143,47 @@ class Gerrit(object):
         """
 
         return Review(self, change_id, revision_id)
+
+    def create_project(self, name, options=None):
+        """
+        Create a project
+        :param name: Name of the project
+        :type name: str
+        :param options: Additional options
+        :type options: dict
+
+        :return: Project if successful
+        :rtype: gerrit.Project
+        :exception: AlreadyExists, UnhandledError
+        """
+
+        r_endpoint = "/a/projects/%s" % name
+
+        if options is None:
+            options = {}
+
+        req = self.call(request='put',
+                        r_endpoint=r_endpoint,
+                        r_payload=options,
+                       )
+
+        result = req.content.decode('utf-8')
+
+        if req.status_code == 201:
+            return self.get_project(name)
+        elif req.status_code == 409:
+            raise AlreadyExists(result)
+        else:
+            raise UnhandledError(result)
+
+    def get_project(self, name):
+        """
+        Get a project
+        :param name: Project name to get
+        :type name: str
+
+        :return: Project object
+        :rtype: gerrit.Project
+        """
+
+        return Project(self, name)
