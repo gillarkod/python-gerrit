@@ -11,6 +11,82 @@ from gerrit.error import (
 
 
 class GerritConTestCase(unittest.TestCase):
+    @mock.patch('gerrit.gerrit.HTTPBasicAuth')
+    @mock.patch('gerrit.gerrit.get_netrc_auth')
+    def test_init_without_auth_parameters(self,
+                                    mock_get_netrc_auth, mock_http_basic_auth):
+        """Init without any auth parameters"""
+        mock_get_netrc_auth.return_value = ('user_found', 'password_found')
+        auth = mock.Mock()
+        auth.username, auth.password = mock_get_netrc_auth()
+
+        reference = Gerrit(url='http://domain.com')
+
+        mock_http_basic_auth.assert_called_with(auth.username, auth.password)
+
+    @mock.patch('gerrit.gerrit.HTTPBasicAuth')
+    @mock.patch('gerrit.gerrit.get_netrc_auth')
+    def test_init_with_auth_type_http(self,
+                                      mock_get_netrc_auth, mock_http_basic_auth):
+        """Init with auth_type parameter set to 'http'"""
+        mock_get_netrc_auth.return_value = ('user_found', 'password_found')
+        auth = mock.Mock()
+        auth.username, auth.password = mock_get_netrc_auth()
+
+        reference = Gerrit(url='http://domain.com', auth_type='http')
+
+        mock_http_basic_auth.assert_called_with(auth.username, auth.password)
+
+    @mock.patch('gerrit.gerrit.HTTPBasicAuth')
+    @mock.patch('gerrit.gerrit.get_netrc_auth')
+    def test_init_with_auth_type_http_auth_method_basic(self,
+                                                        mock_get_netrc_auth,
+                                                        mock_http_basic_auth):
+        """Init with auth_type parameter set to 'http' and auth_method set to 'basic'"""
+        mock_get_netrc_auth.return_value = ('user_found', 'password_found')
+        auth = mock.Mock()
+        auth.username, auth.password = mock_get_netrc_auth()
+
+        reference = Gerrit(url='http://domain.com', auth_type='http',
+                               auth_method='basic')
+
+        mock_http_basic_auth.assert_called_with(auth.username, auth.password)
+
+    @mock.patch('gerrit.gerrit.HTTPDigestAuth')
+    @mock.patch('gerrit.gerrit.get_netrc_auth')
+    def test_init_with_auth_type_http_auth_method_digest(self,
+                                                         mock_get_netrc_auth,
+                                                         mock_http_digest_auth):
+        """Init with auth_type parameter set to 'http' and auth_method set to 'digest'"""
+        mock_get_netrc_auth.return_value = ('user_found', 'password_found')
+        auth = mock.Mock()
+        auth.username, auth.password = mock_get_netrc_auth()
+
+        reference = Gerrit(url='http://domain.com', auth_type='http',
+                               auth_method='digest')
+
+        mock_http_digest_auth.assert_called_with(auth.username, auth.password)
+
+    def test_init_with_invalid_auth_type(self):
+        """Init with invalid auth_type 'invalid'"""
+
+        with self.assertRaises(NotImplementedError) as cm:
+            reference = Gerrit(url='http://domain.com', auth_type='invalid')
+        self.assertEqual("Authorization type 'invalid' is not implemented",
+                         str(cm.exception))
+
+    @mock.patch('gerrit.gerrit.get_netrc_auth')
+    def test_init_with_invalid_auth_method(self, mock_get_netrc_auth):
+        """Init with invalid auth_method 'invalid'"""
+        mock_get_netrc_auth.return_value = ('user_found', 'password_found')
+        auth = mock.Mock()
+        auth.username, auth.password = mock_get_netrc_auth()
+
+        with self.assertRaises(NotImplementedError) as cm:
+            reference = Gerrit(url='http://domain.com', auth_method='invalid')
+        self.assertEqual("Authorization method 'invalid' for auth_type 'http' is not implemented",
+                         str(cm.exception))
+
     @mock.patch('gerrit.gerrit.get_netrc_auth')
     def test_init_with_netrc(self, mock_get_netrc_auth):
         # Set up mock
