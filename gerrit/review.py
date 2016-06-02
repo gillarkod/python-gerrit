@@ -29,7 +29,6 @@ class Review(object):
         self._change_id = change_id
         self._revision_id = revision_id
         self._gerrit_con = gerrit_con
-        self._debug = gerrit_con.debug()
 
     def set_review(self, labels=None, message='', comments=None):
         """

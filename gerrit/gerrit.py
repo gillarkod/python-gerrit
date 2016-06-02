@@ -22,18 +22,13 @@ from gerrit.error import (
 class Gerrit(object):
     """Set up connection to gerrit"""
 
-    def __init__(self, url, auth_type=None, debug=True, **kwargs):
+    def __init__(self, url, auth_type=None, **kwargs):
         """
         :param url: URL to the gerrit server
         :type url: str
         :param auth_type: Authentication method preferred
         :type auth_type: str
-        :param debug: Verbosity for the lib
-        :type debug: bool
         """
-        # Should we print out the messages?
-        # Default is yes, but for testing we can set this to False
-        self._debug = debug
 
         # HTTP REST API HEADERS
         self._requests_headers = {
@@ -120,15 +115,6 @@ class Gerrit(object):
                                   json=r_payload
                                  )
         return req
-
-    def debug(self):
-        """
-        Get debug status
-        :return: Debug enablement status
-        :rtype: bool
-        """
-
-        return self._debug
 
     def get_review(self, change_id, revision_id=None):
         """
