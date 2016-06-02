@@ -45,7 +45,7 @@ class Gerrit(object):
                 self._http_auth(**kwargs)
             else:
                 raise NotImplementedError(
-                    "Authorization type %s not implemented" %
+                    "Authorization type '%s' is not implemented" %
                     auth_type)
         else:
             self._http_auth(**kwargs)
@@ -76,7 +76,7 @@ class Gerrit(object):
             self._http_basic_auth(auth_id, auth_pw)
         else:
             raise NotImplementedError(
-                "Authorization method %s for auth_type http unknown" %
+                "Authorization method '%s' for auth_type 'http' is not implemented" %
                 kwargs['auth_method'])
 
 
