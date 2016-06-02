@@ -10,7 +10,7 @@ from gerrit.error import (
     AlreadyExists,
     AuthorizationError,
 )
-from gerrit import decode_json
+from gerrit.helper import decode_json
 
 
 class Review(object):

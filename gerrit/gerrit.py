@@ -1,6 +1,6 @@
 """
-Connection
-==========
+Gerrit
+======
 
 Set up connection to gerrit
 """
@@ -8,13 +8,14 @@ Set up connection to gerrit
 import requests
 from requests.auth import HTTPBasicAuth
 from requests.utils import get_netrc_auth
+from gerrit.review import Review
 
 from gerrit.error import (
     CredentialsNotFound,
 )
 
 
-class Connection(object):
+class Gerrit(object):
     """Set up connection to gerrit"""
 
     def __init__(self, url, auth_type=None, debug=True, **kwargs):
@@ -117,3 +118,17 @@ class Connection(object):
         """
 
         return self._debug
+
+    def get_review(self, change_id, revision_id=None):
+        """
+        Get a review
+        :param change_id: The Change-Id to fetch from gerrit
+        :type change_id: str
+        :param revision_id: The optional patch set for the change
+        :type revision_id: str
+
+        :return: Review object
+        :rtype: gerrit.Review
+        """
+
+        return Review(self, change_id, revision_id)
