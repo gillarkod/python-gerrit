@@ -9,7 +9,8 @@ import requests
 from requests.auth import HTTPBasicAuth
 from requests.auth import HTTPDigestAuth
 from requests.utils import get_netrc_auth
-from gerrit.review import Review
+
+from gerrit.changes.review import Review
 from gerrit.project import Project
 
 from gerrit.error import (
@@ -17,6 +18,7 @@ from gerrit.error import (
     UnhandledError,
     AlreadyExists,
 )
+
 
 
 class Gerrit(object):
