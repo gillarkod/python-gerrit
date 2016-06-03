@@ -20,7 +20,6 @@ from gerrit.error import (
 )
 
 
-
 class Gerrit(object):
     """Set up connection to gerrit"""
 
@@ -82,7 +81,6 @@ class Gerrit(object):
                 "Authorization method '%s' for auth_type 'http' is not implemented" %
                 kwargs['auth_method'])
 
-
     def _http_basic_auth(self, auth_id, auth_pw):
         # We got everything as we expected, create the HTTPBasicAuth object.
         self._auth = HTTPBasicAuth(auth_id, auth_pw)
@@ -111,11 +109,12 @@ class Gerrit(object):
             'post': requests.post,
             'delete': requests.delete
         }
-        req = request_do[request](url=self._url + r_endpoint,
-                                  auth=self._auth,
-                                  headers=self._requests_headers,
-                                  json=r_payload
-                                 )
+        req = request_do[request](
+            url=self._url + r_endpoint,
+            auth=self._auth,
+            headers=self._requests_headers,
+            json=r_payload
+        )
         return req
 
     def get_review(self, change_id, revision_id=None):
@@ -150,10 +149,11 @@ class Gerrit(object):
         if options is None:
             options = {}
 
-        req = self.call(request='put',
-                        r_endpoint=r_endpoint,
-                        r_payload=options,
-                       )
+        req = self.call(
+            request='put',
+            r_endpoint=r_endpoint,
+            r_payload=options,
+        )
 
         result = req.content.decode('utf-8')
 

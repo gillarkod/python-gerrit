@@ -5,7 +5,6 @@ Project
 Manage gerrit projects
 """
 
-
 from .helper import decode_json
 from .error import UnhandledError
 
@@ -60,4 +59,3 @@ class Project(object):
             raise ValueError(result)
         else:
             raise UnhandledError(result)
-
