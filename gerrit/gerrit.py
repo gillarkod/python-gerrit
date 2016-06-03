@@ -10,7 +10,7 @@ from requests.auth import HTTPBasicAuth
 from requests.auth import HTTPDigestAuth
 from requests.utils import get_netrc_auth
 
-from gerrit.changes.review import Review
+from gerrit.changes.revision import Revision
 from gerrit.project import Project
 
 from gerrit.error import (
@@ -117,19 +117,19 @@ class Gerrit(object):
         )
         return req
 
-    def get_review(self, change_id, revision_id=None):
+    def get_revision(self, change_id, revision_id=None):
         """
-        Get a review
+        Get a revision
         :param change_id: The Change-Id to fetch from gerrit
         :type change_id: str
         :param revision_id: The optional patch set for the change
         :type revision_id: str
 
         :return: Review object
-        :rtype: gerrit.Review
+        :rtype: gerrit.Revision
         """
 
-        return Review(self, change_id, revision_id)
+        return Revision(self, change_id, revision_id)
 
     def create_project(self, name, options=None):
         """
