@@ -12,10 +12,6 @@ from .error import UnhandledError
 class Project(object):
     """Manage gerrit reviews"""
 
-    # pylint: disable=too-many-instance-attributes
-    # pylint: disable=too-few-public-methods
-    # More methods are on their way
-
     def __init__(self, gerrit_con, name):
         """
         :param gerrit_con: The connection object to gerrit

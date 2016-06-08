@@ -13,9 +13,6 @@ from gerrit.error import (
 class Revision(object):
     """Manage gerrit revisions"""
 
-    # pylint: disable=too-few-public-methods
-    # More methods are on their way
-
     def __init__(self, gerrit_con, change_id, revision_id):
         """
         :param gerrit_con: The connection object to gerrit
