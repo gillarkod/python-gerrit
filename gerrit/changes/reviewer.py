@@ -1,8 +1,8 @@
 """
-Review
+Reviewer
 ======
 
-Manage gerrit reviews
+Manage gerrit reviewers for a specific change_id
 """
 
 from gerrit.error import (
@@ -13,67 +13,25 @@ from gerrit.error import (
 from gerrit.helper import decode_json
 
 
-class Review(object):
-    """Manage gerrit reviews"""
+class Reviewer(object):
+    """Manage gerrit reviewers for a change"""
 
-    def __init__(self, gerrit_con, change_id, revision_id):
+    def __init__(self, gerrit_con, change_id):
         """
         :param gerrit_con: The connection object to gerrit
         :type gerrit_con: gerrit.Connection
         :param change_id: The Change Request ID
         :type change_id: str
-        :param revision_id: The Change Request Patch Set/Revision
-        :type revision_id: str
         """
-        # HTTP REST API HEADERS
         self._change_id = change_id
-        self._revision_id = revision_id
         self._gerrit_con = gerrit_con
-
-    def set_review(self, labels=None, message='', comments=None):
-        """
-        Endpoint to create a review for a change_id and a specific patchset
-        :param labels: This is used to set +2 Code-Review for example.
-        :type labels: dict
-        :param message: The message will appear in the actually change-request page.
-        :type message: str
-        :param comments: This will become comments in the code.
-        :type comments: dict
-        """
-
-        if not labels:
-            labels = {}
-        if not comments:
-            comments = {}
-        r_endpoint = "/a/changes/%s/revisions/%s/review" % (self._change_id,
-                                                            self._revision_id)
-        payload = {}
-
-        if labels:
-            payload['labels'] = labels
-        if message:
-            payload['message'] = message
-        if comments:
-            payload['comments'] = comments
-
-        req = self._gerrit_con.call(
-            request='post',
-            r_endpoint=r_endpoint,
-            r_payload=payload
-        )
-
-        status_code = req.status_code
-        if status_code == 200:
-            return True
-        else:
-            raise UnhandledError(req.content)
 
     def add_reviewer(self, account_id):
         """
         Endpoint for adding a reviewer to a change-id
         :param account_id: The user account that should be added as a reviewer
         :type account_id: str
-        :return: You get a True boolean type if the addition of this user was successfull
+        :return: You get a True boolean type if the addition of this user was successful
         :rtype: bool
         :except: LookupError, AlreadyExists, UnhandledError
         """
@@ -102,10 +60,10 @@ class Review(object):
         else:
             raise UnhandledError(json_result)
 
-    def remove_reviewer(self, account_id):
+    def delete_reviewer(self, account_id):
         """
-        Endpoint to remove a reviewer from a change-id
-        :param account_id: Remove a user with account-id as revewier.
+        Endpoint to delete a reviewer from a change-id
+        :param account_id: Remove a user with account-id as reviewer.
         :type account_id: str
         :rtype: bool
         :exception: error.AuthorizationError
@@ -128,7 +86,7 @@ class Review(object):
 
         return False
 
-    def get_reviews(self):
+    def list_reviews(self):
         """
         Endpoint to list reviewers for a change-id
         :returns: The reviews for the specified change-id at init

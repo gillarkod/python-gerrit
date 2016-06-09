@@ -5,17 +5,12 @@ Project
 Manage gerrit projects
 """
 
-
 from .helper import decode_json
 from .error import UnhandledError
 
 
 class Project(object):
     """Manage gerrit reviews"""
-
-    # pylint: disable=too-many-instance-attributes
-    # pylint: disable=too-few-public-methods
-    # More methods are on their way
 
     def __init__(self, gerrit_con, name):
         """
@@ -60,4 +55,3 @@ class Project(object):
             raise ValueError(result)
         else:
             raise UnhandledError(result)
-
