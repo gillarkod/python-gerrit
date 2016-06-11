@@ -46,8 +46,9 @@ You will need to install the required python modules for testing.
 
 `pip install -r test-requirements.txt`
 
-This folder needs to be in the PYTHONPATH so that python can find the Gerrit module. Then run the tests.
+You will also need to install a web driver for the functional tests. Put either firefox or chrome webdrivers in your path.
+
+Use nosetests to run all tests. This will run both unit and function tests. It is recommended to run tests-setup.sh before this to set up your gerrit environment, please note that this requires docker.
 ```
-PYTHONPATH=$(pwd)
-python tests/tests_Gerrit.py
+./tests-setup.sh && nosetests
 ```

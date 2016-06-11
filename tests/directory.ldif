@@ -1,0 +1,31 @@
+version: 1
+
+dn: ou=groups,dc=domain,dc=com
+objectclass: organizationalUnit
+objectclass: top
+ou: groups
+
+dn: cn=users,ou=groups,dc=domain,dc=com
+cn: users
+gidnumber: 500
+objectclass: posixGroup
+objectclass: top
+
+dn: ou=people,dc=domain,dc=com
+objectclass: organizationalUnit
+objectclass: top
+ou: people
+
+dn: cn=felix,ou=people,dc=domain,dc=com
+cn: felix
+gidnumber: 500
+givenname: Felix
+homedirectory: /home/felix
+loginshell: /bin/sh
+objectclass: inetOrgPerson
+objectclass: posixAccount
+objectclass: top
+sn: User
+uid: felix
+uidnumber: 1000
+userpassword: {MD5}NLM5eZ1UCnK/HECMDmiv3Q==
