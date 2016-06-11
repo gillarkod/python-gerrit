@@ -1,21 +1,28 @@
 #!/bin/env python
 
 import unittest
+import os
 import mock
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions
 from selenium.common.exceptions import WebDriverException
+from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 
 from gerrit import Gerrit
 
 MAX_WAIT = 10
 
+
 class TestGerrit(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         try:
+            if os.path.isfile('./wires'):
+                firefox_capabilities = DesiredCapabilities.FIREFOX
+                firefox_capabilities['marionette'] = True
+                firefox_capabilities['binary'] = os.environ.get('firefox_path', '/usr/bin/firefox')
             cls._browser = webdriver.Firefox()
         except WebDriverException:
             cls._browser = webdriver.Chrome()
