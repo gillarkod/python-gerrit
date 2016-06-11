@@ -51,3 +51,10 @@ class TestGerrit(unittest.TestCase):
         # Using the same module he can get his project
         self.assertEqual(created_project, gotten_project)
         self.assertEqual(gotten_project.description, 'my description')
+
+        # Not needing the repo anymore Felix removes it
+        self.assertTrue(created_project.delete())
+
+        # Felix can no longer get the project
+        with self.assertRaises(ValueError):
+            gerrit.get_project('my project')

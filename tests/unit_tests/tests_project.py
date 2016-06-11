@@ -47,3 +47,28 @@ class ProjectTestCase(unittest.TestCase):
 
         with self.assertRaises(UnhandledError):
             project = Project(gerrit_con, 'gerritproject')
+
+    def test_delete_success(self):
+        get = mock.Mock()
+        get.status_code = 200
+        get.content = ')]}\'{"name": "gerritproject", "parent": "All-Projects", "description": "My gerrit project", "state": "ACTIVE"}'.encode('utf-8')
+        delete = mock.Mock()
+        delete.status_code = 204
+        gerrit_con = mock.Mock()
+        gerrit_con.call.side_effect = [get, delete]
+
+        project = Project(gerrit_con, 'gerritproject')
+        self.assertTrue(project.delete())
+
+    def test_delete_fails(self):
+        get = mock.Mock()
+        get.status_code = 200
+        get.content = ')]}\'{"name": "gerritproject", "parent": "All-Projects", "description": "My gerrit project", "state": "ACTIVE"}'.encode('utf-8')
+        delete = mock.Mock()
+        delete.status_code = 400
+        gerrit_con = mock.Mock()
+        gerrit_con.call.side_effect = [get, delete]
+
+        project = Project(gerrit_con, 'gerritproject')
+        with self.assertRaises(UnhandledError):
+            project.delete()

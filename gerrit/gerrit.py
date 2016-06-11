@@ -88,7 +88,7 @@ class Gerrit(object):
         # We got everything as we expected, create the HTTPDigestAuth object.
         self._auth = HTTPDigestAuth(auth_id, auth_pw)
 
-    def call(self, request='get', r_endpoint=None, r_payload=None, ):
+    def call(self, request='get', r_endpoint=None, r_payload=None, r_headers=None):
         """
         Send request to gerrit.
         :param request: The type of http request to perform
@@ -102,6 +102,9 @@ class Gerrit(object):
         :rtype: requests.packages.urllib3.response.HTTPResponse
         """
 
+        if r_headers is None:
+            r_headers = self._requests_headers
+
         request_do = {
             'get': requests.get,
             'put': requests.put,
@@ -111,7 +114,7 @@ class Gerrit(object):
         req = request_do[request](
             url=self._url + r_endpoint,
             auth=self._auth,
-            headers=self._requests_headers,
+            headers=r_headers,
             json=r_payload
         )
         return req
