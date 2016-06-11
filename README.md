@@ -46,7 +46,7 @@ You will need to install the required python modules for testing.
 
 `pip install -r test-requirements.txt`
 
-You will also need to install a web driver for the functional tests. Put either firefox or chrome webdrivers in your path.
+You will also need to install a web driver for the functional tests. Put either firefox or chrome webdrivers in your path and specify it in the test-config.yaml file.
 
 Use nosetests to run all tests. This will run both unit and function tests. It is recommended to run tests-setup.sh before this to set up your gerrit environment, please note that this requires docker.
 ```
