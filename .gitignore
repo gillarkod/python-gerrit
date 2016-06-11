@@ -65,3 +65,11 @@ target/
 # Editor swap files
 *.swp
 *~
+
+# Config files
+test-config.yaml
+
+# webdrivers
+wires
+geckodriver*
+chromedriver
