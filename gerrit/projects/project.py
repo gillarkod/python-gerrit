@@ -5,8 +5,8 @@ Project
 Manage gerrit projects
 """
 
-from .helper import decode_json
-from .error import UnhandledError
+from gerrit.helper import decode_json
+from gerrit.error import UnhandledError
 
 
 class Project(object):

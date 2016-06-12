@@ -4,13 +4,13 @@ import unittest
 
 import mock
 
-from gerrit.gerrit import Gerrit
-from gerrit.project import Project
 from gerrit.error import (
     CredentialsNotFound,
     AlreadyExists,
     UnhandledError,
 )
+from gerrit.gerrit import Gerrit
+from gerrit.projects.project import Project
 
 
 class GerritConTestCase(unittest.TestCase):
