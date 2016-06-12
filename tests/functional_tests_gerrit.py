@@ -33,7 +33,9 @@ class TestGerrit(unittest.TestCase):
                 firefox_capabilities = DesiredCapabilities.FIREFOX
                 firefox_capabilities['marionette'] = True
                 firefox_capabilities['binary'] = os.environ.get('firefox_path', '/usr/bin/firefox')
-            cls._browser = webdriver.Firefox()
+                cls._browser = webdriver.Firefox(capabilities=firefox_capabilities)
+            else:
+                cls._browser = webdriver.Firefox()
         elif cls.config.get('webdriver') == 'chrome':
             cls._browser = webdriver.Chrome()
         else:
@@ -56,7 +58,7 @@ class TestGerrit(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        cls._browser.quit()
+        cls._browser.close()
 
     def test_add_project(self):
         # Felix wants to add a project, he uses the gerrit module to do this
