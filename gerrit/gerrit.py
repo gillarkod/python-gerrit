@@ -11,13 +11,12 @@ from requests.auth import HTTPDigestAuth
 from requests.utils import get_netrc_auth
 
 from gerrit.changes.revision import Revision
-from gerrit.project import Project
-
 from gerrit.error import (
     CredentialsNotFound,
     UnhandledError,
     AlreadyExists,
 )
+from gerrit.projects.project import Project
 
 
 class Gerrit(object):
@@ -126,7 +125,7 @@ class Gerrit(object):
         :type revision_id: str
 
         :return: Review object
-        :rtype: gerrit.Revision
+        :rtype: gerrit.changes.Revision
         """
 
         return Revision(self, change_id, revision_id)
@@ -140,7 +139,7 @@ class Gerrit(object):
         :type options: dict
 
         :return: Project if successful
-        :rtype: gerrit.Project
+        :rtype: gerrit.projects.Project
         :exception: AlreadyExists, UnhandledError
         """
 
@@ -171,7 +170,7 @@ class Gerrit(object):
         :type name: str
 
         :return: Project object
-        :rtype: gerrit.Project
+        :rtype: gerrit.projects.Project
         """
 
         return Project(self, name)

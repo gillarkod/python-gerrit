@@ -2,8 +2,8 @@ import unittest
 
 import mock
 
-from gerrit.project import Project
 from gerrit.error import UnhandledError
+from gerrit.projects.project import Project
 
 
 class ProjectTestCase(unittest.TestCase):
