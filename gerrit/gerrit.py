@@ -125,7 +125,7 @@ class Gerrit(object):
         :type revision_id: str
 
         :return: Review object
-        :rtype: gerrit.Revision
+        :rtype: gerrit.changes.Revision
         """
 
         return Revision(self, change_id, revision_id)
