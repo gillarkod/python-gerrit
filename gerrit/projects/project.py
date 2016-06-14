@@ -35,6 +35,9 @@ class Project(object):
         self.branches = project_info.get('branches')
         self.web_links = project_info.get('web_links')
 
+    def __eq__(self, other):
+        return self.name == other.name
+
     def _get_project(self):
         """
         Get ProjectInfo for a project
