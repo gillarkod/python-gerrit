@@ -58,3 +58,25 @@ class Project(object):
             raise ValueError(result)
         else:
             raise UnhandledError(result)
+
+    def delete(self):
+        """
+        Delete the project, requires delete-project plugin
+        :returns: True if delete succeeds
+        :rtype: Bool
+        :exception: UnhandledError
+        """
+        r_endpoint = '/a/projects/%s' % self._name
+
+        req = self._gerrit_con.call(request='delete',
+                                    r_endpoint=r_endpoint,
+                                    r_headers={},
+                                   )
+
+        status_code = req.status_code
+
+        if status_code == 204:
+            return True
+        else:
+            result = req.content.decode('utf-8')
+            raise UnhandledError(result)
