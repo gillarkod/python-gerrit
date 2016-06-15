@@ -1,5 +1,4 @@
 mock
 pylint
 nose
-selenium
 pyyaml
