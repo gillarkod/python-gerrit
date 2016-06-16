@@ -52,12 +52,13 @@ class Reviewer(object):
         # If the above doesn't match then it should be json data we get.
         json_result = decode_json(result)
 
-        if len(json_result.get('reviewers', False)) == 0:
-            raise AlreadyExists('The requested user \'%s\' is \
-                already an reviewer' % account_id)
-        elif len(json_result.get('reviewers', False)) >= 1:
-            return True
-        else:
+        try:
+            if len(json_result.get('reviewers', False)) == 0:
+                raise AlreadyExists('The requested user \'%s\' is \
+                    already an reviewer' % account_id)
+            elif len(json_result.get('reviewers', False)) >= 1:
+                return True
+        except TypeError:
             raise UnhandledError(json_result)
 
     def delete_reviewer(self, account_id):
