@@ -73,3 +73,6 @@ test-config.yaml
 wires
 geckodriver*
 chromedriver
+
+# git merge files
+*.orig
