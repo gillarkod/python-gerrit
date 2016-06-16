@@ -2,3 +2,5 @@ mock
 pylint
 nose
 pyyaml
+python-coveralls
+coverage
