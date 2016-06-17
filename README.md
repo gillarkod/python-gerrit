@@ -1,7 +1,7 @@
 python-gerrit
 =============
 [![Build Status](https://travis-ci.org/propyless/python-gerrit.svg?branch=master)](https://travis-ci.org/propyless/python-gerrit)
-[![Coverage Status](https://coveralls.io/repos/github/propyless/python-gerrit/badge.svg?branch=master)](https://coveralls.io/github/propyless/python-gerrit?branch=master)
+[![Coverage Status](https://coveralls.io/repos/github/propyless/python-gerrit/badge.svg?branch=master&bust=1)](https://coveralls.io/github/propyless/python-gerrit?branch=master)
 [![python-gerrit on discord](https://img.shields.io/badge/discord-general@python--gerrit-738bd7.svg?style=flat)](https://discord.gg/012Ch20uOuaAtn5su)
 
 Python module that uses the Gerrit REST API as an interface to manage changes, users, groups, and more.
