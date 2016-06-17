@@ -7,8 +7,6 @@ import requests
 
 from gerrit import Gerrit
 
-MAX_WAIT = 10
-
 
 class TestGerrit(unittest.TestCase):
     @classmethod
