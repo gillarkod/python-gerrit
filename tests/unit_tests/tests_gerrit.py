@@ -11,6 +11,7 @@ from gerrit.error import (
 )
 from gerrit.gerrit import Gerrit
 from gerrit.projects.project import Project
+from gerrit.changes.revision import Revision
 
 
 class GerritConTestCase(unittest.TestCase):
@@ -211,6 +212,16 @@ class GerritProjectTestCase(unittest.TestCase):
         reference = Gerrit(url='http://domain.com')
         with self.assertRaises(UnhandledError):
             reference.create_project('gerritproject')
+
+
+class GerritProjectTestCase(unittest.TestCase):
+    @mock.patch('gerrit.gerrit.get_netrc_auth')
+    def test_get_revision(self, mock_get_netrc_auth):
+        mock_get_netrc_auth.return_value = ('user', 'password')
+        reference = Gerrit(url='http://domain.com')
+        revision = reference.get_revision('my-revision')
+        self.assertIsInstance(revision, Revision)
+
 
 class GerritError(unittest.TestCase):
     """Tests for gerrit/error.py"""
