@@ -256,7 +256,12 @@ class GerritChangeTestCase(unittest.TestCase):
         mock_get_netrc_auth.return_value = ('user', 'password')
         get = mock.Mock()
         get.status_code = 200
-        get.content = ')]}\'{"name": "gerritproject", "parent": "All-Projects", "description": "My gerrit project", "state": "ACTIVE"}'.encode('utf-8')
+        get.content = (
+            ')]}\''
+            '{"name": "gerritproject", '
+            '"parent": "All-Projects", '
+            '"description": "My gerrit project", '
+            '"state": "ACTIVE"}').encode('utf-8')
         mock_get.return_value = get
 
         reference = Gerrit(url='http://domain.com')
