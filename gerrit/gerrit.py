@@ -11,6 +11,7 @@ from requests.auth import HTTPDigestAuth
 from requests.utils import get_netrc_auth
 
 from gerrit.changes.revision import Revision
+from gerrit.changes.change import Change
 from gerrit.error import (
     CredentialsNotFound,
     UnhandledError,
@@ -177,3 +178,32 @@ class Gerrit(object):
         """
 
         return Project(self, name)
+
+    def create_change(self, project, subject, branch='master', options=None):
+        """
+        Create a change
+	:param project: Project to create change in
+	:type project: str or gerrit.project.Project
+	:param subject: Subject of the change
+	:type subject: str
+	:param branch: The name of the target branch
+	:type branch: str
+	:param options: Additional options
+	:type options: dict
+	"""
+
+        change = Change(self)
+        return change.create_change(project, subject, branch, options)
+
+    def get_change(self, project, change_id, branch='master'):
+        """
+        Get a change
+        :param project: Project that contains change
+        :type project: str or gerrit.projects.Project
+        :param change_id: ID of change
+        :type change_id: str
+        :param branch: Branch change exists in
+        :type branch: str
+        """
+        change = Change(self)
+        return change.get_change(project, branch, change_id)

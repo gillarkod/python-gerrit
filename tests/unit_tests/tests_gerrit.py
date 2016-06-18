@@ -12,6 +12,7 @@ from gerrit.error import (
 from gerrit.gerrit import Gerrit
 from gerrit.projects.project import Project
 from gerrit.changes.revision import Revision
+from gerrit.changes.change import Change
 
 
 class GerritConTestCase(unittest.TestCase):
@@ -221,6 +222,57 @@ class GerritProjectTestCase(unittest.TestCase):
         reference = Gerrit(url='http://domain.com')
         revision = reference.get_revision('my-revision')
         self.assertIsInstance(revision, Revision)
+
+
+class GerritChangeTestCase(unittest.TestCase):
+    @mock.patch('gerrit.gerrit.get_netrc_auth')
+    @mock.patch('gerrit.gerrit.requests.post')
+    @mock.patch('gerrit.gerrit.requests.get')
+    def test_create_change(self, mock_get, mock_post, mock_get_netrc_auth):
+        mock_get_netrc_auth.return_value = ('user', 'password')
+        post = mock.Mock()
+        post.status_code = 201
+        post.content = ')]}\'{"change_id": "I01440b5fd46a67ee38c9ef2c22eb145b8547cbb2"}'.encode('utf-8')
+        mock_post.return_value = post
+
+        get = mock.Mock()
+        get.status_code = 200
+        get.content = ')]}\'{}'.encode('utf-8')
+        mock_get.return_value = get
+
+        reference = Gerrit(url='http://domain.com')
+        change = reference.create_change('gerritproject', 'change status')
+        self.assertIsInstance(change, Change)
+        mock_post.assert_called_with(
+            auth=mock.ANY,
+            headers=mock.ANY,
+            json=mock.ANY,
+            url='http://domain.com/a/changes/'
+        )
+
+    @mock.patch('gerrit.gerrit.get_netrc_auth')
+    @mock.patch('gerrit.gerrit.requests.get')
+    def test_get_change(self, mock_get, mock_get_netrc_auth):
+        mock_get_netrc_auth.return_value = ('user', 'password')
+        get = mock.Mock()
+        get.status_code = 200
+        get.content = (
+            ')]}\''
+            '{"name": "gerritproject", '
+            '"parent": "All-Projects", '
+            '"description": "My gerrit project", '
+            '"state": "ACTIVE"}').encode('utf-8')
+        mock_get.return_value = get
+
+        reference = Gerrit(url='http://domain.com')
+        change = reference.get_change('gerritproject', 'change id')
+        self.assertIsInstance(change, Change)
+        mock_get.assert_called_with(
+            auth=mock.ANY,
+            headers=mock.ANY,
+            json=mock.ANY,
+            url='http://domain.com/a/changes/gerritproject~master~change id/'
+        )
 
 
 class GerritError(unittest.TestCase):
