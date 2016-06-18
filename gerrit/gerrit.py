@@ -189,11 +189,11 @@ class Gerrit(object):
 	:param branch: The name of the target branch
 	:type branch: str
 	:param options: Additional options
-	:type options: Dict
+	:type options: dict
 	"""
 
         change = Change(self)
-        return change.add_change(project, subject, branch, options)
+        return change.create_change(project, subject, branch, options)
 
     def get_change(self, project, change_id, branch='master'):
         """

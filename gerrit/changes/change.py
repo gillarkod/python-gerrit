@@ -82,7 +82,7 @@ class Change(object):
 
         return self
 
-    def add_change(self, project, subject, branch, options):
+    def create_change(self, project, subject, branch, options):
         """
         Create a change
         :param project: Project to create change in

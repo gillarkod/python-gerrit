@@ -127,7 +127,7 @@ class ChangeTestCase(unittest.TestCase):
                 'I01440b5fd46a67ee38c9ef2c22eb145b8547cbb2'
             )
 
-    def test_add_change_success(self):
+    def test_create_change_success(self):
         req = mock.Mock()
         req.status_code = 201
         req.content = ')]}\'{"change_id": "I01440b5fd46a67ee38c9ef2c22eb145b8547cbb2"}'.encode('utf-8')
@@ -136,7 +136,7 @@ class ChangeTestCase(unittest.TestCase):
 
         with mock.patch.object(Change, 'get_change') as mock_get_change:
             cng = Change(gerrit_con)
-            cng.add_change(
+            cng.create_change(
                 'gerritproject',
                 'My change',
                 'master',
@@ -148,7 +148,7 @@ class ChangeTestCase(unittest.TestCase):
                 'I01440b5fd46a67ee38c9ef2c22eb145b8547cbb2',
             )
 
-    def test_add_change_fail(self):
+    def test_create_change_fail(self):
         req = mock.Mock()
         req.status_code = 404
         req.content = ')]}\'{}'.encode('utf-8')
@@ -157,14 +157,14 @@ class ChangeTestCase(unittest.TestCase):
 
         with self.assertRaises(UnhandledError):
             cng = Change(gerrit_con)
-            cng.add_change(
+            cng.create_change(
                 'gerritproject',
                 'My change',
                 'master',
                 {'status': 'DRAFT'}
             )
 
-    def test_add_change_project_object(self):
+    def test_create_change_project_object(self):
         req = mock.Mock()
         req.status_code = 201
         req.content = ')]}\'{"change_id": "I01440b5fd46a67ee38c9ef2c22eb145b8547cbb2"}'.encode('utf-8')
@@ -180,7 +180,7 @@ class ChangeTestCase(unittest.TestCase):
         with mock.patch.object(Change, 'get_change') as mock_get_change:
             project = Project(gerrit_con_project, 'gerritproject')
             cng = Change(gerrit_con)
-            change = cng.add_change(
+            change = cng.create_change(
                 project,
                 'My change',
                 'master',
