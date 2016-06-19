@@ -129,3 +129,27 @@ class Change(object):
             )
         else:
             raise UnhandledError(result)
+
+    def submit_change(self, options={}):
+        """
+        Submit the change
+        :param options: Additional options
+        :type options: dict
+        :return: On success, the updated Change object
+        :rtype: Change object
+        """
+
+        r_endpoint = "/a/changes/%s/submit" % self.full_id
+
+        req = self._gerrit_con.call(
+            request='post',
+            r_endpoint=r_endpoint,
+            r_payload=options,
+        )
+
+        result = req.content.decode('utf-8')
+
+        if req.status_code == 200:
+            self.status = decode_json(result).get('status')
+        else:
+            raise UnhandledError(result)
