@@ -102,7 +102,7 @@ class Project(object):
             raise UnhandledError(result)
 
 
-    def delete(self):
+    def delete(self, options=None):
         """
         Delete the project, requires delete-project plugin
         :returns: True if delete succeeds
@@ -114,6 +114,7 @@ class Project(object):
         req = self._gerrit_con.call(request='delete',
                                     r_endpoint=r_endpoint,
                                     r_headers={},
+                                    r_payload=options,
                                    )
 
         status_code = req.status_code

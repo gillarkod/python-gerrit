@@ -8,6 +8,8 @@ Manage gerrit changes
 from gerrit.helper import decode_json
 from gerrit.error import UnhandledError
 from gerrit.projects.project import Project
+from gerrit.changes.reviewer import Reviewer
+from gerrit.changes.revision import Revision
 
 class Change(object):
     """Manage gerrit changes"""
@@ -129,3 +131,76 @@ class Change(object):
             )
         else:
             raise UnhandledError(result)
+
+    def submit_change(self, options=None):
+        """
+        Submit the change
+        :param options: Additional options
+        :type options: dict
+        :return: On success, the updated Change object
+        :rtype: Change object
+        """
+
+        r_endpoint = "/a/changes/%s/submit" % self.full_id
+
+        if options is None:
+            options = {}
+
+        req = self._gerrit_con.call(
+            request='post',
+            r_endpoint=r_endpoint,
+            r_payload=options,
+        )
+
+        result = req.content.decode('utf-8')
+
+        if req.status_code == 200:
+            self.status = decode_json(result).get('status')
+        else:
+            raise UnhandledError(result)
+
+    def add_reviewer(self, account_id):
+        """
+        Add a reviewer to the change
+        :param account_id: The user account that should be added as a reviewer
+        :type account_id: str
+        :return: You get a True boolean type if the addition of this user was successful
+        :rtype: bool
+        :except: LookupError, AlreadyExists, UnhandledError
+        """
+        reviewer = Reviewer(self._gerrit_con, self.change_id)
+        return reviewer.add_reviewer(account_id)
+
+    def delete_reviewer(self, account_id):
+        """
+        Delete a reviewer from the change
+        :param account_id: Remove a user with account-id as reviewer.
+        :type account_id: str
+        :rtype: bool
+        :exception: error.AuthorizationError
+        """
+        reviewer = Reviewer(self._gerrit_con, self.change_id)
+        return reviewer.delete_reviewer(account_id)
+
+    def list_reviewers(self):
+        """
+        List reviewers for the change
+        :returns: The reviews for the specified change-id at init
+        :rtype: dict
+        :exception: ValueError, UnhandledError
+        """
+        reviewer = Reviewer(self._gerrit_con, self.change_id)
+        return reviewer.list_reviewers()
+
+    def set_review(self, labels=None, message='', comments=None, revision='current'):
+        """
+        Create a review for the change and a specific patch set
+        :param labels: This is used to set +2 Code-Review for example.
+        :type labels: dict
+        :param message: The message will appear in the actually change-request page.
+        :type message: str
+        :param comments: This will become comments in the code.
+        :type comments: dict
+        """
+        revision = Revision(self._gerrit_con, self.change_id, revision)
+        return revision.set_review(labels=labels, message=message, comments=comments)

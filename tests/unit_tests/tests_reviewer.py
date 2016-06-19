@@ -68,6 +68,11 @@ class ReviewerTestCase(unittest.TestCase):
 
         reviewer = Reviewer(gerrit_con, 'my change id')
         self.assertTrue(reviewer.delete_reviewer('my user'))
+        gerrit_con.call.assert_called_with(
+            request='delete',
+            r_endpoint='/a/changes/my change id/reviewers/my user',
+            r_headers={},
+        )
 
     def test_delete_reviewer_fail(self):
         req = mock.Mock()
@@ -79,7 +84,7 @@ class ReviewerTestCase(unittest.TestCase):
         reviewer = Reviewer(gerrit_con, 'my change id')
         self.assertFalse(reviewer.delete_reviewer('my user'))
 
-    def test_list_reviews_fail(self):
+    def test_list_reviewers_fail(self):
         req = mock.Mock()
         req.content = ')]}\''.encode('utf-8')
         req.status_code = 404
@@ -88,9 +93,9 @@ class ReviewerTestCase(unittest.TestCase):
 
         reviewer = Reviewer(gerrit_con, 'my change id')
         with self.assertRaises(ValueError):
-            reviewer.list_reviews()
+            reviewer.list_reviewers()
 
-    def test_list_reviews_unknown_error(self):
+    def test_list_reviewers_unknown_error(self):
         req = mock.Mock()
         req.content = ')]}\''.encode('utf-8')
         req.status_code = 403
@@ -99,9 +104,9 @@ class ReviewerTestCase(unittest.TestCase):
 
         reviewer = Reviewer(gerrit_con, 'my change id')
         with self.assertRaises(UnhandledError):
-            reviewer.list_reviews()
+            reviewer.list_reviewers()
 
-    def test_list_reviews_success(self):
+    def test_list_reviewers_success(self):
         req = mock.Mock()
         req.content = ''')]}\'[
   {
@@ -149,4 +154,4 @@ class ReviewerTestCase(unittest.TestCase):
                           ]
 
         reviewer = Reviewer(gerrit_con, 'my change id')
-        self.assertEqual(reviewer.list_reviews(), expected_result)
+        self.assertEqual(reviewer.list_reviewers(), expected_result)

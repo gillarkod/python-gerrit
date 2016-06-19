@@ -193,3 +193,165 @@ class ChangeTestCase(unittest.TestCase):
                 'master',
                 'I01440b5fd46a67ee38c9ef2c22eb145b8547cbb2',
             )
+
+    def test_submit_change_success(self):
+        req = mock.Mock()
+        req.status_code = 200
+        req.content = (
+            ')]}\''
+            '{"id": "gerritproject~master~I01440b5fd46a67ee38c9ef2c22eb145b8547cbb2"}'
+        ).encode('utf-8')
+        gerrit_con = mock.Mock()
+        gerrit_con.call.return_value = req
+
+        cng = Change(gerrit_con)
+        change = cng.get_change(
+            'gerritproject',
+            'master',
+            'I01440b5fd46a67ee38c9ef2c22eb145b8547cbb2',
+        )
+        req.content = ')]}\'{"status": "MERGED"}'.encode('utf-8')
+        change.submit_change()
+        gerrit_con.call.assert_called_with(
+            request='post',
+            r_endpoint='/a/changes/gerritproject~master~I01440b5fd46a67ee38c9ef2c22eb145b8547cbb2/submit',
+            r_payload={}
+        )
+        self.assertEqual(change.status, 'MERGED')
+
+    def test_submit_change_success_with_options(self):
+        req = mock.Mock()
+        req.status_code = 200
+        req.content = (
+            ')]}\''
+            '{"id": "gerritproject~master~I01440b5fd46a67ee38c9ef2c22eb145b8547cbb2"}'
+        ).encode('utf-8')
+        gerrit_con = mock.Mock()
+        gerrit_con.call.return_value = req
+
+        cng = Change(gerrit_con)
+        change = cng.get_change(
+            'gerritproject',
+            'master',
+            'I01440b5fd46a67ee38c9ef2c22eb145b8547cbb2',
+        )
+        req.content = ')]}\'{"status": "MERGED"}'.encode('utf-8')
+        change.submit_change({'NOTIFY': 'NONE'})
+        gerrit_con.call.assert_called_with(
+            request='post',
+            r_endpoint='/a/changes/gerritproject~master~I01440b5fd46a67ee38c9ef2c22eb145b8547cbb2/submit',
+            r_payload={'NOTIFY': 'NONE'}
+        )
+        self.assertEqual(change.status, 'MERGED')
+
+    def test_submit_change_fail(self):
+        req = mock.Mock()
+        req.status_code = 200
+        req.content = ')]}\'{}'.encode('utf-8')
+        gerrit_con = mock.Mock()
+        gerrit_con.call.return_value = req
+
+        cng = Change(gerrit_con)
+        change = cng.get_change(
+            'gerritproject',
+            'master',
+            'I01440b5fd46a67ee38c9ef2c22eb145b8547cbb2',
+        )
+        req.status_code = 409
+        req.content = ')]}\'blocked by Verify'.encode('utf-8')
+        with self.assertRaises(UnhandledError):
+            change.submit_change()
+
+    def test_add_reviewer(self):
+        req = mock.Mock()
+        req.status_code = 200
+        req.content = (
+            ')]}\''
+            '{"change_id": "I01440b5fd46a67ee38c9ef2c22eb145b8547cbb2"}'
+        ).encode('utf-8')
+        gerrit_con = mock.Mock()
+        gerrit_con.call.return_value = req
+
+        cng = Change(gerrit_con)
+        change = cng.get_change(
+            'gerritproject',
+            'master',
+            'I01440b5fd46a67ee38c9ef2c22eb145b8547cbb2'
+        )
+        req.content = ')]}\'{"reviewers": ["my user"]}'.encode('utf-8')
+        self.assertTrue(change.add_reviewer('my user'))
+        gerrit_con.call.assert_called_with(
+            request='post',
+            r_endpoint='/a/changes/I01440b5fd46a67ee38c9ef2c22eb145b8547cbb2/reviewers',
+            r_payload={'reviewer': 'my user'},
+        )
+
+    def test_delete_reviewer(self):
+        req = mock.Mock()
+        req.status_code = 200
+        req.content = (
+            ')]}\''
+            '{"change_id": "I01440b5fd46a67ee38c9ef2c22eb145b8547cbb2"}'
+        ).encode('utf-8')
+        gerrit_con = mock.Mock()
+        gerrit_con.call.return_value = req
+
+        cng = Change(gerrit_con)
+        change = cng.get_change(
+            'gerritproject',
+            'master',
+            'I01440b5fd46a67ee38c9ef2c22eb145b8547cbb2'
+        )
+        req.status_code = 204
+        self.assertTrue(change.delete_reviewer('my user'))
+        gerrit_con.call.assert_called_with(
+            request='delete',
+            r_endpoint='/a/changes/I01440b5fd46a67ee38c9ef2c22eb145b8547cbb2/reviewers/my user',
+            r_headers={},
+        )
+
+    def test_list_reviewer(self):
+        req = mock.Mock()
+        req.status_code = 200
+        req.content = (
+            ')]}\''
+            '{"change_id": "I01440b5fd46a67ee38c9ef2c22eb145b8547cbb2"}'
+        ).encode('utf-8')
+        gerrit_con = mock.Mock()
+        gerrit_con.call.return_value = req
+
+        cng = Change(gerrit_con)
+        change = cng.get_change(
+            'gerritproject',
+            'master',
+            'I01440b5fd46a67ee38c9ef2c22eb145b8547cbb2'
+        )
+        req.status_code = 200
+        change.list_reviewers()
+        gerrit_con.call.assert_called_with(
+            r_endpoint='/a/changes/I01440b5fd46a67ee38c9ef2c22eb145b8547cbb2/reviewers/',
+        )
+
+    def test_set_review(self):
+        req = mock.Mock()
+        req.status_code = 200
+        req.content = (
+            ')]}\''
+            '{"change_id": "I01440b5fd46a67ee38c9ef2c22eb145b8547cbb2"}'
+        ).encode('utf-8')
+        gerrit_con = mock.Mock()
+        gerrit_con.call.return_value = req
+
+        cng = Change(gerrit_con)
+        change = cng.get_change(
+            'gerritproject',
+            'master',
+            'I01440b5fd46a67ee38c9ef2c22eb145b8547cbb2'
+        )
+        req.status_code = 200
+        change.set_review()
+        gerrit_con.call.assert_called_with(
+            request='post',
+            r_endpoint='/a/changes/I01440b5fd46a67ee38c9ef2c22eb145b8547cbb2/revisions/current/review',
+            r_payload={}
+        )
