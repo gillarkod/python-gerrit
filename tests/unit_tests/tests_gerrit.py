@@ -174,6 +174,43 @@ class GerritRevisionTestCase(unittest.TestCase):
         self.assertIsInstance(revision, Revision)
 
 
+class GerritProjectTestCase(unittest.TestCase):
+    @mock.patch('gerrit.gerrit.get_netrc_auth')
+    def test_create_project(self, mock_get_netrc_auth):
+        mock_get_netrc_auth.return_value = ('user', 'password')
+        req = mock.Mock()
+        req.status_code = 201
+        req.content = ')]}\'{}'.encode('utf-8')
+        call = mock.Mock()
+        call.return_value = req
+
+        reference = Gerrit(url='http://domain.com')
+        reference.call = call
+        with mock.patch.object(Project, 'get_project'):
+            project = reference.create_project('gerritproject')
+            call.assert_called_with(
+                request='put',
+                r_endpoint='/a/projects/gerritproject',
+                r_payload={},
+            )
+
+    @mock.patch('gerrit.gerrit.get_netrc_auth')
+    def test_get_project(self, mock_get_netrc_auth):
+        mock_get_netrc_auth.return_value = ('user', 'password')
+        req = mock.Mock()
+        req.status_code = 200
+        req.content = ')]}\'{}'.encode('utf-8')
+        call = mock.Mock()
+        call.return_value = req
+
+        reference = Gerrit(url='http://domain.com')
+        reference.call = call
+        project = reference.get_project('gerritproject')
+        call.assert_called_with(
+            r_endpoint='/a/projects/gerritproject/',
+        )
+
+
 class GerritChangeTestCase(unittest.TestCase):
     @mock.patch('gerrit.gerrit.get_netrc_auth')
     @mock.patch('gerrit.gerrit.requests.post')
