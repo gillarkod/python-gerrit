@@ -6,13 +6,16 @@ Manage gerrit projects
 """
 
 from gerrit.helper import decode_json
-from gerrit.error import UnhandledError
+from gerrit.error import (
+    UnhandledError,
+    AlreadyExists,
+)
 
 
 class Project(object):
     """Manage gerrit reviews"""
 
-    def __init__(self, gerrit_con, name):
+    def __init__(self, gerrit_con):
         """
         :param gerrit_con: The connection object to gerrit
         :type gerrit_con: gerrit.Connection
@@ -20,32 +23,31 @@ class Project(object):
         :type name: str
         """
 
-        if name == '':
-            raise KeyError('Project name required')
-
         # HTTP REST API HEADERS
-        self._name = name
         self._gerrit_con = gerrit_con
 
-        project_info = self._get_project()
-        self.name = project_info.get('name')
-        self.parent = project_info.get('parent')
-        self.description = project_info.get('description')
-        self.state = project_info.get('state')
-        self.branches = project_info.get('branches')
-        self.web_links = project_info.get('web_links')
+        self.name = None
+        self.parent = None
+        self.description = None
+        self.state = None
+        self.branches = None
+        self.web_links = None
 
     def __eq__(self, other):
         return self.name == other.name
 
-    def _get_project(self):
+    def get_project(self, name):
         """
         Get ProjectInfo for a project
         :returns: Dict of the ProjectInfo for the project
         :rtype: dict
         :exception: ValueError, UnhandledError
         """
-        r_endpoint = "/a/projects/%s/" % self._name
+
+        if name == '':
+            raise KeyError('Project name required')
+
+        r_endpoint = "/a/projects/%s/" % name
 
         req = self._gerrit_con.call(r_endpoint=r_endpoint)
 
@@ -53,11 +55,52 @@ class Project(object):
         result = req.content.decode('utf-8')
 
         if status_code == 200:
-            return decode_json(result)
+            project_info = decode_json(result)
+            self.name = project_info.get('name')
+            self.parent = project_info.get('parent')
+            self.description = project_info.get('description')
+            self.state = project_info.get('state')
+            self.branches = project_info.get('branches')
+            self.web_links = project_info.get('web_links')
+            return self
         elif status_code == 404:
             raise ValueError(result)
         else:
             raise UnhandledError(result)
+
+    def create_project(self, name, options):
+        """
+        Create a project
+        :param name: Name of the project
+        :type name: str
+        :param options: Additional options
+        :type options: dict
+
+        :return: Project if successful
+        :rtype: gerrit.projects.Project
+        :exception: AlreadyExists, UnhandledError
+        """
+
+        r_endpoint = "/a/projects/%s" % name
+
+        if options is None:
+            options = {}
+
+        req = self._gerrit_con.call(
+            request='put',
+            r_endpoint=r_endpoint,
+            r_payload=options,
+        )
+
+        result = req.content.decode('utf-8')
+
+        if req.status_code == 201:
+            return self.get_project(name)
+        elif req.status_code == 409:
+            raise AlreadyExists(result)
+        else:
+            raise UnhandledError(result)
+
 
     def delete(self):
         """
@@ -66,7 +109,7 @@ class Project(object):
         :rtype: Bool
         :exception: UnhandledError
         """
-        r_endpoint = '/a/projects/%s' % self._name
+        r_endpoint = '/a/projects/%s' % self.name
 
         req = self._gerrit_con.call(request='delete',
                                     r_endpoint=r_endpoint,
