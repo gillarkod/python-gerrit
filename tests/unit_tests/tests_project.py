@@ -171,3 +171,15 @@ class ProjectTestCase(unittest.TestCase):
         project = pjt.get_project('gerritproject')
         with self.assertRaises(UnhandledError):
             project.delete()
+
+    def test_project_eq(self):
+        req = mock.Mock()
+        req.status_code = 200
+        req.content = ')]}\'{"name": "gerritproject"}'.encode('utf-8')
+        gerrit_con = mock.Mock()
+        gerrit_con.call.return_value = req
+
+        pjt = Project(gerrit_con)
+        project1 = pjt.get_project('gerritproject')
+        project2 = pjt.get_project('gerritproject')
+        self.assertEqual(project1, project2)
