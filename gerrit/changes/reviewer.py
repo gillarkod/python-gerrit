@@ -87,7 +87,7 @@ class Reviewer(object):
 
         return False
 
-    def list_reviews(self):
+    def list_reviewers(self):
         """
         Endpoint to list reviewers for a change-id
         :returns: The reviews for the specified change-id at init
