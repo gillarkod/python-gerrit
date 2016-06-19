@@ -29,3 +29,17 @@ sn: User
 uid: felix
 uidnumber: 1000
 userpassword: {MD5}NLM5eZ1UCnK/HECMDmiv3Q==
+
+dn: cn=mary,ou=people,dc=domain,dc=com
+cn: mary
+gidnumber: 500
+givenname: Mary
+homedirectory: /home/mary
+loginshell: /bin/sh
+objectclass: inetOrgPerson
+objectclass: posixAccount
+objectclass: top
+sn: User
+uid: mary
+uidnumber: 1001
+userpassword: {MD5}NLM5eZ1UCnK/HECMDmiv3Q==

@@ -1,4 +1,6 @@
 url: http://localhost:8080/
-username: felix
-password: <password>
+admin_username: felix
+admin_password: <password>
+user_username: mary
+user_password: <password>
 webdriver: firefox
