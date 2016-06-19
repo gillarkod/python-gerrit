@@ -132,6 +132,31 @@ class ProjectTestCase(unittest.TestCase):
         pjt = Project(gerrit_con)
         project = pjt.get_project('gerritproject')
         self.assertTrue(project.delete())
+        gerrit_con.call.assert_called_with(
+            request='delete',
+            r_endpoint='/a/projects/gerritproject',
+            r_headers={},
+            r_payload=None,
+        )
+
+    def test_delete_success_with_options(self):
+        get = mock.Mock()
+        get.status_code = 200
+        get.content = ')]}\'{"name": "gerritproject", "parent": "All-Projects", "description": "My gerrit project", "state": "ACTIVE"}'.encode('utf-8')
+        delete = mock.Mock()
+        delete.status_code = 204
+        gerrit_con = mock.Mock()
+        gerrit_con.call.side_effect = [get, delete]
+
+        pjt = Project(gerrit_con)
+        project = pjt.get_project('gerritproject')
+        self.assertTrue(project.delete({'force': True}))
+        gerrit_con.call.assert_called_with(
+            request='delete',
+            r_endpoint='/a/projects/gerritproject',
+            r_headers={},
+            r_payload={'force': True},
+        )
 
     def test_delete_fails(self):
         get = mock.Mock()
