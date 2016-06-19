@@ -18,8 +18,10 @@ class TestGerrit(unittest.TestCase):
         except IOError:
             # No config file, set defaults
             cls.config = {'url': 'http://localhost:8080/',
-                          'username': 'felix',
-                          'password': '<password>',
+                          'admin_username': 'felix',
+                          'admin_password': '<password>',
+                          'user_username': 'mary',
+                          'user_password': '<password>',
                          }
 
         cls._url = cls.config.get('url')
