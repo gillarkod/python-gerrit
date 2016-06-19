@@ -68,6 +68,11 @@ class ReviewerTestCase(unittest.TestCase):
 
         reviewer = Reviewer(gerrit_con, 'my change id')
         self.assertTrue(reviewer.delete_reviewer('my user'))
+        gerrit_con.call.assert_called_with(
+            request='delete',
+            r_endpoint='/a/changes/my change id/reviewers/my user',
+            r_headers={},
+        )
 
     def test_delete_reviewer_fail(self):
         req = mock.Mock()

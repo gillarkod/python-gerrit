@@ -73,7 +73,8 @@ class Reviewer(object):
 
         req = self._gerrit_con.call(
             request='delete',
-            r_endpoint=r_endpoint
+            r_endpoint=r_endpoint,
+            r_headers={},
         )
 
         status_code = req.status_code
