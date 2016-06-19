@@ -3,4 +3,3 @@ admin_username: felix
 admin_password: <password>
 user_username: mary
 user_password: <password>
-webdriver: firefox
