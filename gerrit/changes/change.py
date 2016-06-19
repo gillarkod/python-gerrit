@@ -132,7 +132,7 @@ class Change(object):
         else:
             raise UnhandledError(result)
 
-    def submit_change(self, options={}):
+    def submit_change(self, options=None):
         """
         Submit the change
         :param options: Additional options
@@ -142,6 +142,9 @@ class Change(object):
         """
 
         r_endpoint = "/a/changes/%s/submit" % self.full_id
+
+        if options is None:
+            options = {}
 
         req = self._gerrit_con.call(
             request='post',
