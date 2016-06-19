@@ -58,7 +58,8 @@ class ChangeTestCase(unittest.TestCase):
         gerrit_con = mock.Mock()
         gerrit_con.call.return_value = req
 
-        project = Project(gerrit_con, 'gerritproject')
+        pjt = Project(gerrit_con)
+        project = pjt.get_project('gerritproject')
         cng = Change(gerrit_con)
         change = cng.get_change(
             project,
@@ -178,7 +179,8 @@ class ChangeTestCase(unittest.TestCase):
         gerrit_con_project.call.return_value = req_project
 
         with mock.patch.object(Change, 'get_change') as mock_get_change:
-            project = Project(gerrit_con_project, 'gerritproject')
+            pjt = Project(gerrit_con_project)
+            project = pjt.get_project('gerritproject')
             cng = Change(gerrit_con)
             change = cng.create_change(
                 project,

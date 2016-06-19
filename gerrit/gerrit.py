@@ -12,11 +12,7 @@ from requests.utils import get_netrc_auth
 
 from gerrit.changes.revision import Revision
 from gerrit.changes.change import Change
-from gerrit.error import (
-    CredentialsNotFound,
-    UnhandledError,
-    AlreadyExists,
-)
+from gerrit.error import CredentialsNotFound
 from gerrit.projects.project import Project
 
 
@@ -147,25 +143,8 @@ class Gerrit(object):
         :exception: AlreadyExists, UnhandledError
         """
 
-        r_endpoint = "/a/projects/%s" % name
-
-        if options is None:
-            options = {}
-
-        req = self.call(
-            request='put',
-            r_endpoint=r_endpoint,
-            r_payload=options,
-        )
-
-        result = req.content.decode('utf-8')
-
-        if req.status_code == 201:
-            return self.get_project(name)
-        elif req.status_code == 409:
-            raise AlreadyExists(result)
-        else:
-            raise UnhandledError(result)
+        project = Project(self)
+        return project.create_project(name, options)
 
     def get_project(self, name):
         """
@@ -177,7 +156,8 @@ class Gerrit(object):
         :rtype: gerrit.projects.Project
         """
 
-        return Project(self, name)
+        project = Project(self)
+        return project.get_project(name)
 
     def create_change(self, project, subject, branch='master', options=None):
         """
