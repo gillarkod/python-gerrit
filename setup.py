@@ -2,7 +2,10 @@
 
 import os
 
-from setuptools import setup
+from setuptools import (
+    setup,
+    find_packages,
+)
 
 repoRootPath = os.path.dirname(os.path.abspath(__file__))
 versionFile = os.path.join(repoRootPath, 'VERSION')
@@ -20,7 +23,7 @@ setup(
     version=get_version(),
     author="propyless@github",
     license='Apache License 2.0',
-    packages=['gerrit'],
+    packages=find_packages('.'),
     include_package_data=True,
     url='https://github.com/propyless/python-gerrit',
     description='python-gerrit is a module that interfaces with Gerrits REST API.',
