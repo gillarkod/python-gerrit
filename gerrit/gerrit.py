@@ -14,6 +14,7 @@ from gerrit.changes.revision import Revision
 from gerrit.changes.change import Change
 from gerrit.error import CredentialsNotFound
 from gerrit.projects.project import Project
+from gerrit.helper import process_endpoint
 
 
 class Gerrit(object):
@@ -109,7 +110,7 @@ class Gerrit(object):
             'delete': requests.delete
         }
         req = request_do[request](
-            url=self._url + r_endpoint,
+            url=self._url + process_endpoint(r_endpoint),
             auth=self._auth,
             headers=r_headers,
             json=r_payload

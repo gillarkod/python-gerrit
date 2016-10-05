@@ -258,7 +258,7 @@ class GerritChangeTestCase(unittest.TestCase):
             auth=mock.ANY,
             headers=mock.ANY,
             json=mock.ANY,
-            url='http://domain.com/a/changes/gerritproject~master~change id/'
+            url='http://domain.com/a/changes/gerritproject%7Emaster%7Echange%20id/'
         )
 
 

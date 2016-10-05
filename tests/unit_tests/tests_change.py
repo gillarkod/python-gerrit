@@ -214,7 +214,11 @@ class ChangeTestCase(unittest.TestCase):
         change.submit_change()
         gerrit_con.call.assert_called_with(
             request='post',
-            r_endpoint='/a/changes/gerritproject~master~I01440b5fd46a67ee38c9ef2c22eb145b8547cbb2/submit',
+            r_endpoint={
+                'pre': '/a/changes/',
+                'data': 'gerritproject~master~I01440b5fd46a67ee38c9ef2c22eb145b8547cbb2',
+                'post': '/submit/',
+            },
             r_payload={}
         )
         self.assertEqual(change.status, 'MERGED')
@@ -239,7 +243,11 @@ class ChangeTestCase(unittest.TestCase):
         change.submit_change({'NOTIFY': 'NONE'})
         gerrit_con.call.assert_called_with(
             request='post',
-            r_endpoint='/a/changes/gerritproject~master~I01440b5fd46a67ee38c9ef2c22eb145b8547cbb2/submit',
+            r_endpoint={
+                'pre': '/a/changes/',
+                'data': 'gerritproject~master~I01440b5fd46a67ee38c9ef2c22eb145b8547cbb2',
+                'post': '/submit/',
+            },
             r_payload={'NOTIFY': 'NONE'}
         )
         self.assertEqual(change.status, 'MERGED')
