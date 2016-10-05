@@ -54,7 +54,10 @@ class Change(object):
         self._change_id = '%s~%s~%s' % (project, branch, change_id)
         self._gerrit_con = self._gerrit_con
 
-        r_endpoint = "/a/changes/%s/" % self._change_id
+        r_endpoint = {
+            'pre': '/a/changes/',
+            'data': self._change_id,
+        }
 
         req = self._gerrit_con.call(r_endpoint=r_endpoint)
 
@@ -141,7 +144,11 @@ class Change(object):
         :rtype: Change object
         """
 
-        r_endpoint = "/a/changes/%s/submit" % self.full_id
+        r_endpoint = {
+            'pre': '/a/changes/',
+            'data': self.full_id,
+            'post': '/submit/',
+        }
 
         if options is None:
             options = {}
