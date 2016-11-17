@@ -5,6 +5,7 @@ Change
 Manage gerrit changes
 """
 
+import urllib
 from gerrit.helper import decode_json
 from gerrit.error import UnhandledError
 from gerrit.projects.project import Project
@@ -72,6 +73,8 @@ class Change(object):
             raise UnhandledError(result)
 
         self.full_id = change_info.get('id')
+        if self.full_id is not None:
+            self.full_id = urllib.parse.unquote(self.full_id)
         self.project = change_info.get('project')
         self.branch = change_info.get('branch')
         self.change_id = change_info.get('change_id')
