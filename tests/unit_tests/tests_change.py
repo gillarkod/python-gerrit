@@ -363,3 +363,50 @@ class ChangeTestCase(unittest.TestCase):
             r_endpoint='/a/changes/I01440b5fd46a67ee38c9ef2c22eb145b8547cbb2/revisions/current/review',
             r_payload={}
         )
+
+    def test_parent_project_quote(self):
+        """Test that a quoted id is unquoted"""
+        req = mock.Mock()
+        req.status_code = 200
+        content_string = (
+            ')]}\''
+            '{"id": "parentproject%2Fgerritproject~master~I01440b5fd46a67ee38c9ef2c22eb145b8547cbb2"}'
+        )
+        req.content = content_string.encode('utf-8')
+        gerrit_con = mock.Mock()
+        gerrit_con.call.return_value = req
+
+        cng = Change(gerrit_con)
+        change = cng.get_change(
+            'parentproject/gerritproject',
+            'master',
+            'I01440b5fd46a67ee38c9ef2c22eb145b8547cbb2'
+        )
+        self.assertEqual(
+            change.full_id,
+            'parentproject/gerritproject~master~I01440b5fd46a67ee38c9ef2c22eb145b8547cbb2',
+        )
+
+
+    def test_parent_project_no_quote(self):
+        """Test that an already unquoted id is not unquoted"""
+        req = mock.Mock()
+        req.status_code = 200
+        content_string = (
+            ')]}\''
+            '{"id": "parentproject/gerritproject~master~I01440b5fd46a67ee38c9ef2c22eb145b8547cbb2"}'
+        )
+        req.content = content_string.encode('utf-8')
+        gerrit_con = mock.Mock()
+        gerrit_con.call.return_value = req
+
+        cng = Change(gerrit_con)
+        change = cng.get_change(
+            'parentproject/gerritproject',
+            'master',
+            'I01440b5fd46a67ee38c9ef2c22eb145b8547cbb2'
+        )
+        self.assertEqual(
+            change.full_id,
+            'parentproject/gerritproject~master~I01440b5fd46a67ee38c9ef2c22eb145b8547cbb2',
+        )
