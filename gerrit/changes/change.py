@@ -53,7 +53,6 @@ class Change(object):
 
         # HTTP REST API HEADERS
         self._change_id = '%s~%s~%s' % (project, branch, change_id)
-        self._gerrit_con = self._gerrit_con
 
         r_endpoint = {
             'pre': '/a/changes/',
