@@ -1,15 +1,17 @@
-#!/bin/env python
-
+"""
+Functional tests for python-gerrit
+"""
 import unittest
-import os
+import uuid
 import yaml
 import requests
-import uuid
-
 from gerrit import Gerrit
 
 
 class TestGerrit(unittest.TestCase):
+    """
+    Main class for python-gerrit tests
+    """
     @classmethod
     def setUpClass(cls):
         try:
@@ -17,12 +19,13 @@ class TestGerrit(unittest.TestCase):
                 cls.config = yaml.load(ymlfile)
         except IOError:
             # No config file, set defaults
-            cls.config = {'url': 'http://localhost:8080/',
-                          'admin_username': 'felix',
-                          'admin_password': '<password>',
-                          'user_username': 'mary',
-                          'user_password': '<password>',
-                         }
+            cls.config = {
+                'url': 'http://localhost:8080/',
+                'admin_username': 'felix',
+                'admin_password': '<password>',
+                'user_username': 'mary',
+                'user_password': '<password>',
+            }
 
         cls._url = cls.config.get('url')
         cls._admin_username = cls.config.get('admin_username')
@@ -32,7 +35,10 @@ class TestGerrit(unittest.TestCase):
 
         # Log in once to make Felix admin
         headers = {'User-Agent': 'Mozilla/5.0'}
-        payload = {'username':cls._admin_username,'password':cls._admin_password}
+        payload = {
+            'username': cls._admin_username,
+            'password': cls._admin_password,
+        }
         session_felix = requests.Session()
         session_felix.post(
             cls._url + 'login/%23/q/status%3Aopen',
@@ -42,7 +48,10 @@ class TestGerrit(unittest.TestCase):
 
         # Log in once to make Mary accessable
         headers = {'User-Agent': 'Mozilla/5.0'}
-        payload = {'username':cls._user_username,'password':cls._user_password}
+        payload = {
+            'username': cls._user_username,
+            'password': cls._user_password,
+        }
         session_mary = requests.Session()
         session_mary.post(
             cls._url + 'login/%23/q/status%3Aopen',
@@ -54,6 +63,9 @@ class TestGerrit(unittest.TestCase):
         cls._project = uuid.uuid4().hex
 
     def test_add_project(self):
+        """
+        Test that a project can be successfully managed
+        """
         # Felix wants to add a project, he uses the gerrit module to do this
         gerrit = Gerrit(
             url=self._url,
@@ -84,11 +96,14 @@ class TestGerrit(unittest.TestCase):
         reviewers = change.list_reviewers()
         self.assertEqual(
             reviewers,
-            [{'username': 'mary',
-              'approvals': {'Code-Review': ' 0'},
-              'name': 'Mary',
-              '_account_id': 1000001
-             }]
+            [
+                {
+                    'username': 'mary',
+                    'approvals': {'Code-Review': ' 0'},
+                    'name': 'Mary',
+                    '_account_id': 1000001
+                }
+            ]
         )
 
         # Felix made a mistake, Mary shouldn't be a reviewer.
@@ -97,7 +112,7 @@ class TestGerrit(unittest.TestCase):
 
         # He can now see that Mary is no longer a reviewer
         reviewers = change.list_reviewers()
-        self.assertEqual(reviewers,[])
+        self.assertEqual(reviewers, [])
 
         # Happy with the change, Felix reviews and submits it
         change.set_review(labels={'Code-Review': '+2'})
