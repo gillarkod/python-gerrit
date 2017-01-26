@@ -40,7 +40,7 @@ class Project(object):
         """
         Get ProjectInfo for a project
         :returns: Dict of the ProjectInfo for the project
-        :rtype: dict
+        :rtype: Project
         :exception: ValueError, UnhandledError
         """
 
@@ -74,7 +74,7 @@ class Project(object):
         :param name: Name of the project
         :type name: str
         :param options: Additional options
-        :type options: dict
+        :type options: dict, None
 
         :return: Project if successful
         :rtype: gerrit.projects.Project

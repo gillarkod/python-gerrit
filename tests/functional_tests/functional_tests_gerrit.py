@@ -14,10 +14,10 @@ class TestGerrit(unittest.TestCase):
     """
     @classmethod
     def setUpClass(cls):
-        try:
+        try:  # pragma: no cover
             with open('test-config.yaml', 'r') as ymlfile:
                 cls.config = yaml.load(ymlfile)
-        except IOError:
+        except IOError:  # pragma: no cover
             # No config file, set defaults
             cls.config = {
                 'url': 'http://localhost:8080/',

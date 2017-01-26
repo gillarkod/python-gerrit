@@ -1,57 +1,90 @@
-#!/usr/bin/env python
-
-import unittest
+"""
+Unit tests for gerrit.helper.process_endpoint
+"""
 from gerrit.helper import process_endpoint
+from tests import GerritUnitTest
 
-class TestProcessEndpoint(unittest.TestCase):
-    def test_str_returns_input(self):
-        endpoint = '/a/changes/project~master~I12345'
+
+class TestProcessEndpoint(GerritUnitTest):
+    """
+    Unit tests for endpoint processing
+    """
+    def test_str(self):
+        """
+        Test that a str endpoint is returned as is
+        """
+        endpoint = '/a/changes/{}'.format(self.FULL_ID)
         self.assertEqual(
             process_endpoint(endpoint),
             endpoint,
         )
 
-    def test_dict_returns_http_encoded_str(self):
+    def test_dict(self):
+        """
+        Test that a dict endpoint is returned as an encoded str
+        """
         endpoint = {
             'pre': '/a/changes/',
-            'data': 'parent/project~master~I12345',
+            'data': '{}/{}'.format(
+                self.PARENT,
+                self.FULL_ID,
+            ),
         }
         self.assertEqual(
             process_endpoint(endpoint),
-            '/a/changes/parent%2Fproject%7Emaster%7EI12345/',
+            '/a/changes/{}%2F{}/'.format(
+                self.PARENT,
+                self.FULL_ID_QUOTED,
+            ),
         )
 
-    def test_dict_with_post_returns_http_encoded_str(self):
+    def test_dict_with_post(self):
+        """
+        Test that a dict with post endpoint is returned as an encoded str
+        """
         endpoint = {
             'pre': '/a/changes/',
-            'data': 'parent/project~master~I12345',
+            'data': '{}/{}'.format(
+                self.PARENT,
+                self.FULL_ID,
+            ),
             'post': '/submit/',
         }
         self.assertEqual(
             process_endpoint(endpoint),
-            '/a/changes/parent%2Fproject%7Emaster%7EI12345/submit/',
+            '/a/changes/{}%2F{}/submit/'.format(
+                self.PARENT,
+                self.FULL_ID_QUOTED,
+            ),
         )
 
-    def test_empty_dict_raises(self):
+    def test_empty_dict(self):
+        """
+        Test that an empty dict raises
+        """
         with self.assertRaises(KeyError):
             process_endpoint({})
 
-    def test_dict_with_only_pre_raises(self):
+    def test_dict_with_only_pre(self):
+        """
+        Test that a dict with only pre raises
+        """
         with self.assertRaises(KeyError):
             process_endpoint({'pre': '/a/changes/'})
 
-    def test_dict_with_only_data_raises(self):
+    def test_dict_with_only_data(self):
+        """
+        Test that a dict with only data raises
+        """
         with self.assertRaises(KeyError):
-            process_endpoint({'data': 'parent/project~master~I12345'})
+            process_endpoint({'data': '{}/{}'.format(
+                self.PARENT,
+                self.FULL_ID,
+            )})
 
-    def test_dict_with_only_post_raises(self):
+    def test_dict_with_only_post(self):
+        """
+        Test that a dict with only post raises
+        """
         with self.assertRaises(KeyError):
             process_endpoint({'post': '/submit/'})
-
-
-def main():
-    unittest.main()
-
-
-if __name__ == '__main__':
-    main()

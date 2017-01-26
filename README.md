@@ -39,7 +39,9 @@ For example:
 Are you interested in helping out with the development of python-gerrit?
 
 ## Coding standards
-We try to follow PEP8 standards to the best of our ability.
+We try to follow PEP8 standards to the best of our ability. All python files should pass pylint, check with
+
+`pylint gerrit tests *.py`
 
 ## Testing
 You should be standing in the root directory of the git repository.
@@ -56,4 +58,5 @@ Use nosetests to run all tests. This will run both unit and function tests. It i
 
 ### Coverage
 We like tests, to check the coverage locally you can use nose.
-`nosetests --with-coverage --cover-package=gerrit`
+
+`nosetests --with-coverage --cover-package=gerrit,tests --cover-tests`

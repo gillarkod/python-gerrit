@@ -36,7 +36,7 @@ class Change(object):
         """
         Get ChangeInfo for a change
         :returns: Dict of the ChangeInfo for the change
-        :rtype: dict
+        :rtype: Change
         :exception: ValueError, UnhandledError
         """
         if isinstance(project, Project):
