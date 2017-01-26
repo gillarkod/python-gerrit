@@ -11,7 +11,7 @@ python:
   - "3.3"
   - "3.4"
   - "3.5"
-install: "pip install -r requirements.txt && pip install -r test-requirements.txt"
-script: "nosetests --with-coverage --cover-package=gerrit && pylint gerrit"
+install: "pip install -r requirements.txt && pip install -r test-requirements.txt && pip install -e ."
+script: "nosetests --with-coverage --cover-package=gerrit && pylint gerrit tests/functional_tests/"
 after_success:
   - coveralls
