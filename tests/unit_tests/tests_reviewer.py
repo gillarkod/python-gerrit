@@ -1,157 +1,147 @@
-import unittest
+"""
+Unit tests for gerrit.changes.reviewer
+"""
 import mock
-
 from gerrit.error import (
     AlreadyExists,
     UnhandledError,
     AuthorizationError,
 )
 from gerrit.changes.reviewer import Reviewer
+from tests import GerritUnitTest
 
 
-class ReviewerTestCase(unittest.TestCase):
-    def test_add_reviewer_user_doesnt_exist(self):
-        req = mock.Mock()
-        req.content = ')]}\'my user does not identify a registered user or group'.encode('utf-8')
-        gerrit_con = mock.Mock()
-        gerrit_con.call.return_value = req
+class ReviewerTestCase(GerritUnitTest):
+    """
+    Unit tests for handling reviewers
+    """
+    def setUp(self):
+        self.req = mock.Mock()
+        self.req.content = self.build_response()
+        self.gerrit_con = mock.Mock()
+        self.gerrit_con.call.return_value = self.req
 
-        reviewer = Reviewer(gerrit_con, 'my change id')
+    def test_add_doesnt_exist(self):
+        """
+        Test that it raises when trying to add a user as reviewer that doesn't exist
+        """
+        self.req.content = self.build_response(
+            'my user does not identify a registered user or group'
+        )
+
+        reviewer = Reviewer(self.gerrit_con, self.CHANGE_ID)
         with self.assertRaises(LookupError):
-            reviewer.add_reviewer('my user')
+            reviewer.add_reviewer(self.USER)
 
-    def test_add_reviewer_user_is_already_reviewer(self):
-        req = mock.Mock()
-        req.content = ')]}\'{"reviewers": []}'.encode('utf-8')
-        gerrit_con = mock.Mock()
-        gerrit_con.call.return_value = req
+    def test_add_already_reviewer(self):
+        """
+        Test that it raises when trying to add a user that is already a reviewer
+        """
+        self.req.content = self.build_response({"reviewers": []})
 
-        reviewer = Reviewer(gerrit_con, 'my change id')
+        reviewer = Reviewer(self.gerrit_con, self.CHANGE_ID)
         with self.assertRaises(AlreadyExists):
-            reviewer.add_reviewer('my user')
+            reviewer.add_reviewer(self.USER)
 
-    def test_add_reviewer_user_added(self):
-        req = mock.Mock()
-        req.content = ')]}\'{"reviewers": ["my user"]}'.encode('utf-8')
-        gerrit_con = mock.Mock()
-        gerrit_con.call.return_value = req
+    def test_add_success(self):
+        """
+        Test that a user can be added as a reviewer
+        """
+        self.req.content = self.build_response({"reviewers": [self.USER]})
 
-        reviewer = Reviewer(gerrit_con, 'my change id')
-        self.assertTrue(reviewer.add_reviewer('my user'))
+        reviewer = Reviewer(self.gerrit_con, self.CHANGE_ID)
+        self.assertTrue(reviewer.add_reviewer(self.USER))
 
-    def test_add_reviewer_unhandled_error(self):
-        req = mock.Mock()
-        req.content = ')]}\'{}'.encode('utf-8')
-        gerrit_con = mock.Mock()
-        gerrit_con.call.return_value = req
+    def test_add_unhandled(self):
+        """
+        Test that it raises if gerrit returns an unknown content
+        """
+        self.req.content = self.build_response({})
 
-        reviewer = Reviewer(gerrit_con, 'my change id')
+        reviewer = Reviewer(self.gerrit_con, self.CHANGE_ID)
         with self.assertRaises(UnhandledError):
-            reviewer.add_reviewer('my user')
+            reviewer.add_reviewer(self.USER)
 
-    def test_delete_reviewer_unauthorized(self):
-        req = mock.Mock()
-        req.content = ')]}\'delete not permitted'.encode('utf-8')
-        gerrit_con = mock.Mock()
-        gerrit_con.call.return_value = req
+    def test_delete_unauthorized(self):
+        """
+        Test that it raises when deleting a reviewer is not permitted
+        """
+        self.req.content = self.build_response('delete not permitted')
 
-        reviewer = Reviewer(gerrit_con, 'my change id')
+        reviewer = Reviewer(self.gerrit_con, self.CHANGE_ID)
         with self.assertRaises(AuthorizationError):
-            reviewer.delete_reviewer('my user')
+            reviewer.delete_reviewer(self.USER)
 
-    def test_delete_reviewer_success(self):
-        req = mock.Mock()
-        req.content = ')]}\''.encode('utf-8')
-        req.status_code = 204
-        gerrit_con = mock.Mock()
-        gerrit_con.call.return_value = req
+    def test_delete_success(self):
+        """
+        Test that a reviewer can be deleted
+        """
+        self.req.status_code = 204
 
-        reviewer = Reviewer(gerrit_con, 'my change id')
-        self.assertTrue(reviewer.delete_reviewer('my user'))
-        gerrit_con.call.assert_called_with(
+        reviewer = Reviewer(self.gerrit_con, self.CHANGE_ID)
+        self.assertTrue(reviewer.delete_reviewer(self.USER))
+        self.gerrit_con.call.assert_called_with(
             request='delete',
-            r_endpoint='/a/changes/my change id/reviewers/my user',
+            r_endpoint='/a/changes/{}/reviewers/{}'.format(self.CHANGE_ID, self.USER),
             r_headers={},
         )
 
-    def test_delete_reviewer_fail(self):
-        req = mock.Mock()
-        req.content = ')]}\''.encode('utf-8')
-        req.status_code = 404
-        gerrit_con = mock.Mock()
-        gerrit_con.call.return_value = req
+    def test_delete_fail(self):
+        """
+        Test that it returns false if removing a reviewer fails
+        """
+        self.req.status_code = 404
 
-        reviewer = Reviewer(gerrit_con, 'my change id')
-        self.assertFalse(reviewer.delete_reviewer('my user'))
+        reviewer = Reviewer(self.gerrit_con, self.CHANGE_ID)
+        self.assertFalse(reviewer.delete_reviewer(self.USER))
 
-    def test_list_reviewers_fail(self):
-        req = mock.Mock()
-        req.content = ')]}\''.encode('utf-8')
-        req.status_code = 404
-        gerrit_con = mock.Mock()
-        gerrit_con.call.return_value = req
+    def test_list_fail(self):
+        """
+        Test that it raises if listing reviewers fails
+        :return:
+        """
+        self.req.status_code = 404
 
-        reviewer = Reviewer(gerrit_con, 'my change id')
+        reviewer = Reviewer(self.gerrit_con, self.CHANGE_ID)
         with self.assertRaises(ValueError):
             reviewer.list_reviewers()
 
-    def test_list_reviewers_unknown_error(self):
-        req = mock.Mock()
-        req.content = ')]}\''.encode('utf-8')
-        req.status_code = 403
-        gerrit_con = mock.Mock()
-        gerrit_con.call.return_value = req
+    def test_list_unknown(self):
+        """
+        Test that it raises if gerrit returns an unknown status code
+        """
+        self.req.status_code = 403
 
-        reviewer = Reviewer(gerrit_con, 'my change id')
+        reviewer = Reviewer(self.gerrit_con, self.CHANGE_ID)
         with self.assertRaises(UnhandledError):
             reviewer.list_reviewers()
 
-    def test_list_reviewers_success(self):
-        req = mock.Mock()
-        req.content = ''')]}\'[
-  {
-    "approvals": {
-      "Verified": "+1",
-      "Code-Review": "+2"
-    },
-    "_account_id": 1000096,
-    "name": "John Doe",
-    "email": "john.doe@example.com"
-  },
-  {
-    "approvals": {
-      "Verified": " 0",
-      "Code-Review": "-1"
-    },
-    "_account_id": 1000097,
-    "name": "Jane Roe",
-    "email": "jane.roe@example.com"
-  }
-]
-'''.encode('utf-8')
-        req.status_code = 200
-        gerrit_con = mock.Mock()
-        gerrit_con.call.return_value = req
+    def test_list_success(self):
+        """
+        Test that listing reviewers returns the expected result
+        """
+        self.req.status_code = 200
         expected_result = [
-                              {
-                                  "approvals": {
-                                      "Verified": "+1",
-                                      "Code-Review": "+2"
-                                  },
-                                  "_account_id": 1000096,
-                                  "name": "John Doe",
-                                  "email": "john.doe@example.com"
-                              },
-                              {
-                                  "approvals": {
-                                      "Verified": " 0",
-                                      "Code-Review": "-1"
-                                  },
-                                  "_account_id": 1000097,
-                                  "name": "Jane Roe",
-                                  "email": "jane.roe@example.com"
-                              }
-                          ]
+            {
+                "approvals": {
+                    "Verified": "+1",
+                    "Code-Review": "+2"
+                },
+                "_account_id": 1000096,
+                "name": "John Doe",
+                "email": "john.doe@example.com"
+            },
+            {
+                "approvals": {
+                    "Verified": " 0",
+                    "Code-Review": "-1"
+                },
+                "_account_id": 1000097,
+                "name": "Jane Roe",
+                "email": "jane.roe@example.com"
+            }
+        ]
+        self.req.content = self.build_response(expected_result)
 
-        reviewer = Reviewer(gerrit_con, 'my change id')
+        reviewer = Reviewer(self.gerrit_con, self.CHANGE_ID)
         self.assertEqual(reviewer.list_reviewers(), expected_result)

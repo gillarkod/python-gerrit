@@ -1,347 +1,336 @@
-import json
-import unittest
+"""
+Unit tests for gerrit.changes.change
+"""
 import mock
-import copy
-
 from gerrit.error import UnhandledError
 from gerrit.changes.change import Change
 from gerrit.projects.project import Project
+from tests import GerritUnitTest
 
 
-class ChangeTestCase(unittest.TestCase):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._prefix = ')]}\''
-        self._content = {
-            "id":  "gerritproject~master~I01440b5fd46a67ee38c9ef2c22eb145b8547cbb2",
-            "project":  "gerritproject",
-            "branch":  "master",
-            "change_id":  "I01440b5fd46a67ee38c9ef2c22eb145b8547cbb2",
-            "subject":  "My change",
-            "status":  "NEW",
-            "created":  "2013-02-01 09:59:32.126000000",
-            "updated":  "2013-02-21 11:16:36.775000000",
-            "mergable":  True,
-            "insertions":  34,
-            "deletions":  101,
-            "number":  3965,
-            "owner":  {"name": "John Doe"},
-        }
-        self._gerrit_con = mock.Mock()
+class ChangeTestCase(GerritUnitTest):
+    """
+    Unit tests for gerrit.changes.change
+    """
+    def setUp(self):
+        self.req = mock.Mock()
+        self.req.status_code = 200
+        self.req.content = self.build_response({})
+        self.gerrit_con = mock.Mock()
+        self.gerrit_con.call.return_value = self.req
 
-    def standard_change(self, content, status_code=200):
-        if isinstance(content, list):
-            self._gerrit_con.call.side_effect = content
-        else:
-            self._gerrit_con.call.return_value = self.prepare_request(
-                content,
-                status_code=status_code,
-            )
+        self.req_project = mock.Mock()
+        self.req_project.status_code = 200
+        self.req_project.content = self.build_response({"name": "gerritproject"})
+        self.gerrit_con_project = mock.Mock()
+        self.gerrit_con_project.call.return_value = self.req_project
 
-        cng = Change(self._gerrit_con)
-        return cng.get_change(
-            self._content.get('project'),
-            self._content.get('branch'),
-            self._content.get('change_id'),
+        self.req.content = self.build_response(
+            {
+                "id": self.FULL_ID,
+                "project": self.PROJECT,
+                "branch": self.BRANCH,
+                "change_id": self.CHANGE_ID,
+                "subject": self.SUBJECT,
+                "status": self.STATUS,
+                "created": self.CREATED,
+                "updated": self.UPDATED,
+                "mergable": self.MERGABLE,
+                "insertions": self.INSERTIONS,
+                "deletions": self.DELETIONS,
+                "number": self.NUMBER,
+                "owner": self.OWNER,
+            }
         )
-
-    def prepare_request(self, content, status_code=200):
-        req = mock.Mock()
-        req.status_code = status_code
-        req.content = '{}\n{}'.format(
-            self._prefix,
-            json.dumps(content)
-        ).encode('utf-8')
-        return req
+        self.change = Change(self.gerrit_con).get_change(
+            self.PROJECT,
+            self.BRANCH,
+            self.CHANGE_ID,
+        )
 
     def test_get_change_returns_change(self):
-        change = self.standard_change(
-            self._content,
-        )
-        self.assertEqual(change.full_id, self._content.get('id'))
-        self.assertEqual(change.project, self._content.get('project'))
-        self.assertEqual(change.branch, self._content.get('branch'))
-        self.assertEqual(change.change_id, self._content.get('change_id'))
-        self.assertEqual(change.subject, self._content.get('subject'))
-        self.assertEqual(change.status, self._content.get('status'))
-        self.assertEqual(change.created, self._content.get('created'))
-        self.assertEqual(change.updated, self._content.get('updated'))
-        self.assertEqual(change.mergable, self._content.get('mergable'))
-        self.assertEqual(change.insertions, self._content.get('insertions'))
-        self.assertEqual(change.deletions, self._content.get('deletions'))
-        self.assertEqual(change.number, self._content.get('number'))
-        self.assertEqual(change.owner, self._content.get('owner'))
+        """
+        Test that a change is properly parsed
+        """
+        self.assertEqual(self.change.full_id, self.FULL_ID)
+        self.assertEqual(self.change.project, self.PROJECT)
+        self.assertEqual(self.change.branch, self.BRANCH)
+        self.assertEqual(self.change.change_id, self.CHANGE_ID)
+        self.assertEqual(self.change.subject, self.SUBJECT)
+        self.assertEqual(self.change.status, self.STATUS)
+        self.assertEqual(self.change.created, self.CREATED)
+        self.assertEqual(self.change.updated, self.UPDATED)
+        self.assertEqual(self.change.mergable, self.MERGABLE)
+        self.assertEqual(self.change.insertions, self.INSERTIONS)
+        self.assertEqual(self.change.deletions, self.DELETIONS)
+        self.assertEqual(self.change.number, self.NUMBER)
+        self.assertEqual(self.change.owner, self.OWNER)
 
     def test_get_change_project_object(self):
-        self._gerrit_con.call.return_value = self.prepare_request(
-            self._content,
-        )
-
-        pjt = Project(self._gerrit_con)
-        project = pjt.get_project('gerritproject')
-        cng = Change(self._gerrit_con)
-        change = cng.get_change(
+        """
+        Test that a change can be fetched when using a project object
+        """
+        project = Project(self.gerrit_con).get_project(self.PROJECT)
+        change = Change(self.gerrit_con).get_change(
             project,
-            self._content.get('branch'),
-            self._content.get('change_id'),
+            self.BRANCH,
+            self.CHANGE_ID
         )
-        self.assertEqual(change.full_id, self._content.get('id'))
+        self.assertEqual(change.full_id, self.FULL_ID)
 
     def test_get_change_empty_project(self):
+        """
+        Test that fetching a change with an empty project raises an error
+        """
         with self.assertRaises(KeyError):
-            cng = Change(self._gerrit_con)
-            cng.get_change(
+            Change(self.gerrit_con).get_change(
                 '',
-                self._content.get('branch'),
-                self._content.get('change_id'),
+                self.BRANCH,
+                self.CHANGE_ID
             )
 
     def test_get_change_empty_branch(self):
+        """
+        Test that fetching a change with an empty branch raises an error
+        """
         with self.assertRaises(KeyError):
-            cng = Change(self._gerrit_con)
-            cng.get_change(
-                self._content.get('project'),
+            Change(self.gerrit_con).get_change(
+                self.PROJECT,
                 '',
-                self._content.get('change_id'),
+                self.CHANGE_ID
             )
 
     def test_get_change_empty_change_id(self):
+        """
+        Test that fetching a change with an empty change ID raises an error
+        """
         with self.assertRaises(KeyError):
-            cng = Change(self._gerrit_con)
-            cng.get_change(
-                self._content.get('project'),
-                self._content.get('branch'),
-                '',
+            Change(self.gerrit_con).get_change(
+                self.PROJECT,
+                self.BRANCH,
+                ''
             )
 
     def test_get_change_doesnt_exist(self):
+        """
+        Test that fetching a change that doesn't exist raises an error
+        """
+        self.req.status_code = 404
+
         with self.assertRaises(ValueError):
-            self.standard_change(
-                dict(),
-                404
+            Change(self.gerrit_con).get_change(
+                self.PROJECT,
+                self.BRANCH,
+                self.CHANGE_ID
             )
 
     def test_get_change_unhandled_error(self):
+        """
+        Test that an unhandled error from gerrit raises an error
+        """
+        self.req.status_code = 503
+
         with self.assertRaises(UnhandledError):
-            self.standard_change(
-                dict(),
-                503
+            Change(self.gerrit_con).get_change(
+                self.PROJECT,
+                self.BRANCH,
+                self.CHANGE_ID
             )
 
     def test_create_change_success(self):
-        self._gerrit_con.call.return_value = self.prepare_request(
-            self._content,
-            201,
-        )
+        """
+        Test that a change is successfully created
+        """
+        self.req.status_code = 201
 
         with mock.patch.object(Change, 'get_change') as mock_get_change:
-            cng = Change(self._gerrit_con)
-            cng.create_change(
-                self._content.get('project'),
-                self._content.get('subject'),
-                self._content.get('branch'),
+            Change(self.gerrit_con).create_change(
+                self.PROJECT,
+                self.SUBJECT,
+                self.BRANCH,
                 {'status': 'DRAFT'},
             )
             mock_get_change.assert_called_with(
-                self._content.get('project'),
-                self._content.get('branch'),
-                self._content.get('change_id'),
+                self.PROJECT,
+                self.BRANCH,
+                self.CHANGE_ID,
             )
 
     def test_create_change_fail(self):
-        self._gerrit_con.call.return_value = self.prepare_request(
-            dict(),
-            404,
-        )
+        """
+        Test that failing to create a change raises an error
+        """
+        self.req.status_code = 404
 
         with self.assertRaises(UnhandledError):
-            cng = Change(self._gerrit_con)
-            cng.create_change(
-                self._content.get('project'),
-                self._content.get('subject'),
-                self._content.get('branch'),
+            Change(self.gerrit_con).create_change(
+                self.PROJECT,
+                self.SUBJECT,
+                self.BRANCH,
                 {'status': 'DRAFT'}
             )
 
-    def test_create_change_project_object(self):
-        self._gerrit_con.call.side_effect = [
-            self.prepare_request(
-                {"name": "gerritproject"}
-            ),
-            self.prepare_request(
-                self._content,
-                201,
-            ),
-        ]
+    def test_create_change_project_obj(self):
+        """
+        Test that a change is successfully created when using a project object
+        """
+        self.req.status_code = 201
 
         with mock.patch.object(Change, 'get_change') as mock_get_change:
-            pjt = Project(self._gerrit_con)
-            project = pjt.get_project('gerritproject')
-            cng = Change(self._gerrit_con)
-            cng.create_change(
+            project = Project(self.gerrit_con_project).get_project(self.PROJECT)
+            Change(self.gerrit_con).create_change(
                 project,
-                self._content.get('subject'),
-                self._content.get('branch'),
+                self.SUBJECT,
+                self.BRANCH,
                 {'status': 'DRAFT'}
             )
             mock_get_change.assert_called_with(
-                self._content.get('project'),
-                self._content.get('branch'),
-                self._content.get('change_id'),
+                self.PROJECT,
+                self.BRANCH,
+                self.CHANGE_ID,
             )
 
     def test_submit_change_success(self):
-        change = self.standard_change(
-            [
-                self.prepare_request(
-                    self._content,
-                ),
-                self.prepare_request(
-                    {"status": "MERGED"}
-                )
-            ]
-        )
-        change.submit_change()
-        self._gerrit_con.call.assert_called_with(
+        """
+        Test that submitting a change is successful
+        """
+        self.req.content = self.build_response({"status": "MERGED"})
+        self.change.submit_change()
+        self.gerrit_con.call.assert_called_with(
             request='post',
             r_endpoint={
                 'pre': '/a/changes/',
-                'data': self._content.get('id'),
+                'data': self.FULL_ID,
                 'post': '/submit/',
             },
-            r_payload={}
+            r_payload={},
         )
-        self.assertEqual(change.status, 'MERGED')
+        self.assertEqual(self.change.status, 'MERGED')
 
-    def test_submit_change_success_with_options(self):
-        change = self.standard_change(
-            [
-                self.prepare_request(
-                    self._content,
-                ),
-                self.prepare_request(
-                    {"status": "MERGED"}
-                )
-            ]
-        )
-        change.submit_change({'NOTIFY': 'NONE'})
-        self._gerrit_con.call.assert_called_with(
+    def test_submit_change_with_options(self):
+        """
+        Test that a change can be submitted with options
+        """
+        self.req.content = self.build_response({"status": "MERGED"})
+        self.change.submit_change({'NOTIFY': 'NONE'})
+        self.gerrit_con.call.assert_called_with(
             request='post',
             r_endpoint={
                 'pre': '/a/changes/',
-                'data': self._content.get('id'),
+                'data': self.FULL_ID,
                 'post': '/submit/',
             },
             r_payload={'NOTIFY': 'NONE'}
         )
-        self.assertEqual(change.status, 'MERGED')
+        self.assertEqual(self.change.status, 'MERGED')
 
     def test_submit_change_fail(self):
-        change = self.standard_change(
-            [
-                self.prepare_request(
-                    dict(),
-                ),
-                self.prepare_request(
-                    'blocked by Verify',
-                    409,
-                )
-            ]
-        )
+        """
+        Test that a submit raises an error if it is blocked
+        """
+        self.req.status_code = 409
+        self.req.content = self.build_response('blocked by Verify')
         with self.assertRaises(UnhandledError):
-            change.submit_change()
+            self.change.submit_change()
 
     def test_add_reviewer(self):
-        change = self.standard_change(
-            [
-                self.prepare_request(
-                    self._content,
-                ),
-                self.prepare_request(
-                    {"reviewers": ["my user"]},
-                )
-            ]
-        )
-        self.assertTrue(change.add_reviewer('my user'))
-        self._gerrit_con.call.assert_called_with(
+        """
+        Test that a reviewer can be added
+        """
+        self.req.content = self.build_response({"reviewers": [self.USER]})
+        self.assertTrue(self.change.add_reviewer(self.USER))
+        self.gerrit_con.call.assert_called_with(
             request='post',
-            r_endpoint='/a/changes/{}/reviewers'.format(self._content.get('change_id')),
-            r_payload={'reviewer': 'my user'},
+            r_endpoint='/a/changes/{}/reviewers'.format(self.CHANGE_ID),
+            r_payload={'reviewer': self.USER},
         )
 
     def test_delete_reviewer(self):
-        change = self.standard_change(
-            [
-                self.prepare_request(
-                    self._content,
-                ),
-                self.prepare_request(
-                    self._content,
-                    204,
-                )
-            ]
-        )
-        self.assertTrue(change.delete_reviewer('my user'))
-        self._gerrit_con.call.assert_called_with(
+        """
+        Test that a reviewer can be deleted
+        """
+        self.req.status_code = 204
+        self.assertTrue(self.change.delete_reviewer(self.USER))
+        self.gerrit_con.call.assert_called_with(
             request='delete',
-            r_endpoint='/a/changes/{}/reviewers/my user'.format(self._content.get('change_id')),
+            r_endpoint='/a/changes/{}/reviewers/{}'.format(self.CHANGE_ID, self.USER),
             r_headers={},
         )
 
     def test_list_reviewer(self):
-        change = self.standard_change(
-            self._content,
-        )
-        change.list_reviewers()
-        self._gerrit_con.call.assert_called_with(
-            r_endpoint='/a/changes/{}/reviewers/'.format(self._content.get('change_id')),
+        """
+        Test that reviewers can be listed
+        """
+        self.change.list_reviewers()
+        self.gerrit_con.call.assert_called_with(
+            r_endpoint='/a/changes/{}/reviewers/'.format(self.CHANGE_ID),
         )
 
     def test_set_review(self):
-        change = self.standard_change(
-            self._content,
-        )
-        change.set_review()
-        self._gerrit_con.call.assert_called_with(
+        """
+        Test that a review can be set
+        """
+        self.change.set_review()
+        self.gerrit_con.call.assert_called_with(
             request='post',
-            r_endpoint='/a/changes/{}/revisions/current/review'.format(self._content.get('change_id')),
+            r_endpoint='/a/changes/{}/revisions/current/review'.format(self.CHANGE_ID),
             r_payload={}
         )
 
     def test_parent_project_quote(self):
-        """Test that a quoted id is unquoted"""
-        content = copy.deepcopy(self._content)
-        content['id'] = 'parentproject%2Fgerritproject~master~I01440b5fd46a67ee38c9ef2c22eb145b8547cbb2'
-        self._gerrit_con.call.return_value = self.prepare_request(
-            content,
+        """
+        Test that a quoted id is unquoted
+        """
+        self.req.content = self.build_response(
+            {
+                "id": "{}%2F{}".format(
+                    self.PARENT,
+                    self.FULL_ID,
+                ),
+            }
         )
 
-        cng = Change(self._gerrit_con)
-        change = cng.get_change(
-            'parentproject/gerritproject',
-            self._content.get('branch'),
-            self._content.get('change_id'),
+        change = Change(self.gerrit_con).get_change(
+            '{}/{}'.format(
+                self.PARENT,
+                self.PROJECT,
+            ),
+            self.BRANCH,
+            self.CHANGE_ID
         )
         self.assertEqual(
             change.full_id,
-            'parentproject/{}'.format(self._content.get('id')),
+            '{}/{}'.format(
+                self.PARENT,
+                self.FULL_ID,
+            ),
         )
 
     def test_parent_project_no_quote(self):
-        """Test that an already unquoted id is not unquoted"""
-        content = copy.deepcopy(self._content)
-        content['id'] = 'parentproject/gerritproject~master~I01440b5fd46a67ee38c9ef2c22eb145b8547cbb2'
-        self._gerrit_con.call.return_value = self.prepare_request(
-            content,
+        """
+        Test that an already unquoted id is not unquoted
+        """
+        self.req.content = self.build_response(
+            {
+                "id": "{}/{}".format(
+                    self.PARENT,
+                    self.CHANGE_ID,
+                ),
+            }
         )
 
-        cng = Change(self._gerrit_con)
-        change = cng.get_change(
-            'parentproject/gerritproject',
-            self._content.get('branch'),
-            self._content.get('change_id'),
+        change = Change(self.gerrit_con).get_change(
+            '{}/{}'.format(
+                self.PARENT,
+                self.PROJECT,
+            ),
+            self.BRANCH,
+            self.CHANGE_ID
         )
         self.assertEqual(
             change.full_id,
-            'parentproject/{}'.format(self._content.get('id')),
+            '{}/{}'.format(
+                self.PARENT,
+                self.CHANGE_ID,
+            ),
         )

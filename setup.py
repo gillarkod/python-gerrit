@@ -1,22 +1,23 @@
-#!/usr/bin/python
-
+"""
+Setup file used for pypi
+"""
 import os
-
 from setuptools import (
     setup,
     find_packages,
 )
 
-repoRootPath = os.path.dirname(os.path.abspath(__file__))
-versionFile = os.path.join(repoRootPath, 'VERSION')
+REPOROOTPATH = os.path.dirname(os.path.abspath(__file__))
+VERSIONFILE = os.path.join(REPOROOTPATH, 'VERSION')
 
 
 def get_version():
-    f = open(versionFile)
-    ver = f.readline().strip('\n')
-    f.close()
-    return ver
-
+    """
+    Get the current version
+    :return: str of version
+    """
+    with open(VERSIONFILE) as file:
+        return file.readline().strip('\n')
 
 setup(
     name="python-gerrit",

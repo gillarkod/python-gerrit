@@ -1,185 +1,189 @@
-import unittest
-
+"""
+Unit tests for gerrit.projects.project
+"""
+from copy import copy
 import mock
-
 from gerrit.error import (
     UnhandledError,
     AlreadyExists,
 )
 from gerrit.projects.project import Project
+from tests import GerritUnitTest
 
 
-class ProjectTestCase(unittest.TestCase):
-    def test_create_project(self):
-        gerrit_con = mock.Mock()
-        req = mock.Mock()
-        req.status_code = 201
-        req.content = ')]}\'{}'.encode('utf-8')
-        gerrit_con.call.return_value = req
+class ProjectTestCase(GerritUnitTest):
+    """
+    Unit tests for handling projects
+    """
+    def setUp(self):
+        self.project_content = self.build_response(
+            {
+                'name': self.PROJECT,
+                'parent': self.PARENT,
+                'description': self.DESCRIPTION,
+                'state': self.STATE,
+            }
+        )
+        self.gerrit_con = mock.Mock()
+        self.req = mock.Mock()
+        self.req.status_code = 200
+        self.req.content = self.build_response({})
+        self.gerrit_con.call.return_value = self.req
+        self.req_delete = copy(self.req)
+        self.req_delete.status_code = 204
 
+    def test_create(self):
+        """
+        Test that a project can be created
+        """
+        self.req.status_code = 201
         with mock.patch.object(Project, 'get_project') as mock_get_project:
-            prj = Project(gerrit_con)
-            project = prj.create_project(
-                'gerritproject',
-                {'description': 'My descriprion'},
+            project = Project(self.gerrit_con)
+            project.create_project(
+                self.PROJECT,
+                {'description': self.DESCRIPTION},
             )
-            gerrit_con.call.assert_called_with(
+            self.gerrit_con.call.assert_called_with(
                 request='put',
-                r_payload={'description': 'My descriprion'},
-                r_endpoint='/a/projects/gerritproject',
+                r_payload={'description': self.DESCRIPTION},
+                r_endpoint='/a/projects/{}'.format(self.PROJECT),
             )
-            mock_get_project.assert_called_with('gerritproject')
+            mock_get_project.assert_called_with(self.PROJECT)
 
-    def test_create_project_without_options(self):
-        gerrit_con = mock.Mock()
-        req = mock.Mock()
-        req.status_code = 201
-        req.content = ')]}\'{}'.encode('utf-8')
-        gerrit_con.call.return_value = req
-
+    def test_create_without_options(self):
+        """
+        Test that a project can be created without options
+        """
+        self.req.status_code = 201
         with mock.patch.object(Project, 'get_project') as mock_get_project:
-            prj = Project(gerrit_con)
-            project = prj.create_project(
-                'gerritproject',
+            project = Project(self.gerrit_con)
+            project.create_project(
+                self.PROJECT,
                 None,
             )
-            gerrit_con.call.assert_called_with(
+            self.gerrit_con.call.assert_called_with(
                 request='put',
                 r_payload={},
-                r_endpoint='/a/projects/gerritproject',
+                r_endpoint='/a/projects/{}'.format(self.PROJECT),
             )
-            mock_get_project.assert_called_with('gerritproject')
+            mock_get_project.assert_called_with(self.PROJECT)
 
-    @mock.patch('gerrit.gerrit.requests.put')
-    def test_create_project_exists(self, mock_requests):
-        gerrit_con = mock.Mock()
-        req = mock.Mock()
-        req.status_code = 409
-        req.content = ')]}\'{}'.encode('utf-8')
-        gerrit_con.call.return_value = req
-
+    def test_create_exists(self):
+        """
+        Test that it raises if you try to create a project that already exists
+        """
+        self.req.status_code = 409
         with self.assertRaises(AlreadyExists):
-            prj = Project(gerrit_con)
-            prj.create_project('gerritproject', None)
+            project = Project(self.gerrit_con)
+            project.create_project(self.PROJECT, None)
 
-    @mock.patch('gerrit.gerrit.get_netrc_auth')
-    @mock.patch('gerrit.gerrit.requests.put')
-    def test_create_project_unknown_error(self, mock_requests, mock_get_netrc_auth):
-        gerrit_con = mock.Mock()
-        req = mock.Mock()
-        req.status_code = 503
-        req.content = ')]}\'{}'.encode('utf-8')
-        gerrit_con.call.return_value = req
+    def test_create_unknown_error(self):
+        """
+        Test that it raises if server returns unknown status code
+        """
+        self.req.status_code = 503
 
         with self.assertRaises(UnhandledError):
-            prj = Project(gerrit_con)
-            prj.create_project('gerritproject', None)
+            project = Project(self.gerrit_con)
+            project.create_project(self.PROJECT, None)
 
-    def test_get_project_returns_project(self):
-        req = mock.Mock()
-        req.status_code = 200
-        req.content = ')]}\'{"name": "gerritproject", "parent": "All-Projects", "description": "My gerrit project", "state": "ACTIVE"}'.encode('utf-8')
-        gerrit_con = mock.Mock()
-        gerrit_con.call.return_value = req
+    def test_get_returns_project(self):
+        """
+        Test that a project can be fetched
+        """
+        self.req.content = self.project_content
 
-        pjt = Project(gerrit_con)
-        project = pjt.get_project('gerritproject')
-        self.assertEqual(project.name, 'gerritproject')
-        self.assertEqual(project.parent, 'All-Projects')
-        self.assertEqual(project.description, 'My gerrit project')
-        self.assertEqual(project.state, 'ACTIVE')
+        project = Project(self.gerrit_con)
+        project = project.get_project(self.PROJECT)
+        self.assertEqual(project.name, self.PROJECT)
+        self.assertEqual(project.parent, self.PARENT)
+        self.assertEqual(project.description, self.DESCRIPTION)
+        self.assertEqual(project.state, self.STATE)
         self.assertEqual(project.branches, None)
         self.assertEqual(project.web_links, None)
 
-    def test_get_project_raises_on_empty_name(self):
-        gerrit_con = mock.Mock()
-
+    def test_get_raises_on_empty_name(self):
+        """
+        Test that it raises if an empty project name is specified
+        """
         with self.assertRaises(KeyError):
-            pjt = Project(gerrit_con)
-            pjt.get_project('')
+            project = Project(self.gerrit_con)
+            project.get_project('')
 
-    def test_get_project_raises_on_nonexisting_project(self):
-        req = mock.Mock()
-        req.status_code = 404
-        req.content = 'Project not found'.encode('utf-8')
-        gerrit_con = mock.Mock()
-        gerrit_con.call.return_value = req
+    def test_get_raises_on_nonexist(self):
+        """
+        Test that it raises if the project doesn't exist
+        """
+        self.req.status_code = 404
 
         with self.assertRaises(ValueError):
-            pjt = Project(gerrit_con)
-            pjt.get_project('gerritproject')
+            project = Project(self.gerrit_con)
+            project.get_project(self.PROJECT)
 
-    def test_get_project_raises_on_unknown_error(self):
-        req = mock.Mock()
-        req.status_code = 503
-        req.content = 'Internal server error'.encode('utf-8')
-        gerrit_con = mock.Mock()
-        gerrit_con.call.return_value = req
+    def test_get_raises_on_unknown(self):
+        """
+        Test that it raises if gerrit returns an unknown status code
+        """
+        self.req.status_code = 503
 
         with self.assertRaises(UnhandledError):
-            pjt = Project(gerrit_con)
-            pjt.get_project('gerritproject')
+            project = Project(self.gerrit_con)
+            project.get_project(self.PROJECT)
 
     def test_delete_success(self):
-        get = mock.Mock()
-        get.status_code = 200
-        get.content = ')]}\'{"name": "gerritproject", "parent": "All-Projects", "description": "My gerrit project", "state": "ACTIVE"}'.encode('utf-8')
-        delete = mock.Mock()
-        delete.status_code = 204
-        gerrit_con = mock.Mock()
-        gerrit_con.call.side_effect = [get, delete]
+        """
+        Test that it is possible to delete a project
+        """
+        self.req.content = self.project_content
+        self.gerrit_con.call.side_effect = [self.req, self.req_delete]
 
-        pjt = Project(gerrit_con)
-        project = pjt.get_project('gerritproject')
+        project = Project(self.gerrit_con)
+        project = project.get_project(self.PROJECT)
         self.assertTrue(project.delete())
-        gerrit_con.call.assert_called_with(
+        self.gerrit_con.call.assert_called_with(
             request='delete',
-            r_endpoint='/a/projects/gerritproject',
+            r_endpoint='/a/projects/{}'.format(self.PROJECT),
             r_headers={},
             r_payload=None,
         )
 
-    def test_delete_success_with_options(self):
-        get = mock.Mock()
-        get.status_code = 200
-        get.content = ')]}\'{"name": "gerritproject", "parent": "All-Projects", "description": "My gerrit project", "state": "ACTIVE"}'.encode('utf-8')
-        delete = mock.Mock()
-        delete.status_code = 204
-        gerrit_con = mock.Mock()
-        gerrit_con.call.side_effect = [get, delete]
+    def test_delete_success_options(self):
+        """
+        Test that it is possible to delete a project with options
+        """
+        self.req.content = self.project_content
+        self.gerrit_con.call.side_effect = [self.req, self.req_delete]
 
-        pjt = Project(gerrit_con)
-        project = pjt.get_project('gerritproject')
+        project = Project(self.gerrit_con)
+        project = project.get_project(self.PROJECT)
         self.assertTrue(project.delete({'force': True}))
-        gerrit_con.call.assert_called_with(
+        self.gerrit_con.call.assert_called_with(
             request='delete',
-            r_endpoint='/a/projects/gerritproject',
+            r_endpoint='/a/projects/{}'.format(self.PROJECT),
             r_headers={},
             r_payload={'force': True},
         )
 
     def test_delete_fails(self):
-        get = mock.Mock()
-        get.status_code = 200
-        get.content = ')]}\'{"name": "gerritproject", "parent": "All-Projects", "description": "My gerrit project", "state": "ACTIVE"}'.encode('utf-8')
-        delete = mock.Mock()
-        delete.status_code = 400
-        gerrit_con = mock.Mock()
-        gerrit_con.call.side_effect = [get, delete]
+        """
+        Test that failing to delete a project raises
+        """
+        self.req_delete.status_code = 400
+        self.req.content = self.project_content
+        self.gerrit_con.call.side_effect = [self.req, self.req_delete]
 
-        pjt = Project(gerrit_con)
-        project = pjt.get_project('gerritproject')
+        project = Project(self.gerrit_con)
+        project = project.get_project(self.PROJECT)
         with self.assertRaises(UnhandledError):
             project.delete()
 
     def test_project_eq(self):
-        req = mock.Mock()
-        req.status_code = 200
-        req.content = ')]}\'{"name": "gerritproject"}'.encode('utf-8')
-        gerrit_con = mock.Mock()
-        gerrit_con.call.return_value = req
+        """
+        Test that projects can be compared
+        """
+        self.req.content = self.project_content
 
-        pjt = Project(gerrit_con)
-        project1 = pjt.get_project('gerritproject')
-        project2 = pjt.get_project('gerritproject')
+        project = Project(self.gerrit_con)
+        project1 = project.get_project(self.PROJECT)
+        project2 = project.get_project(self.PROJECT)
         self.assertEqual(project1, project2)

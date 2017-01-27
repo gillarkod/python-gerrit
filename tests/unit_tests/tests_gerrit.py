@@ -1,281 +1,320 @@
-#!/usr/bin/env python
-
+"""
+Unit tests for gerrit.changes.change
+"""
 import unittest
-
 import mock
-
-from gerrit.error import (
-    CredentialsNotFound,
-    AlreadyExists,
-    UnhandledError,
+from gerrit.error import CredentialsNotFound
+from gerrit.gerrit import (
+    Gerrit,
+    HTTPDigestAuth,
+    HTTPBasicAuth,
 )
-from gerrit.gerrit import Gerrit
 from gerrit.projects.project import Project
 from gerrit.changes.revision import Revision
 from gerrit.changes.change import Change
+from tests import GerritUnitTest
 
 
-class GerritConTestCase(unittest.TestCase):
-    @mock.patch('gerrit.gerrit.HTTPBasicAuth')
-    @mock.patch('gerrit.gerrit.get_netrc_auth')
-    def test_init_without_auth_parameters(self,
-                                    mock_get_netrc_auth, mock_http_basic_auth):
-        """Init without any auth parameters"""
-        mock_get_netrc_auth.return_value = ('user_found', 'password_found')
-        auth = mock.Mock()
-        auth.username, auth.password = mock_get_netrc_auth()
+class GerritTestCase(GerritUnitTest):
+    """
+    Basic class with standard settings and mocks
+    """
+    def setUp(self):
+        self.mock_http_basic_auth = mock.patch('gerrit.gerrit.HTTPBasicAuth').start()
+        self.mock_http_basic_auth.side_effect = HTTPBasicAuth
+        self.mock_http_digest_auth = mock.patch('gerrit.gerrit.HTTPDigestAuth').start()
+        self.mock_http_digest_auth.side_effect = HTTPDigestAuth
+        self.mock_get_netrc_auth = mock.patch('gerrit.gerrit.get_netrc_auth').start()
+        self.mock_get_netrc_auth.return_value = (self.USERNAME, self.PASSWORD)
 
-        reference = Gerrit(url='http://domain.com')
 
-        mock_http_basic_auth.assert_called_with(auth.username, auth.password)
+class GerritInitTestCase(GerritTestCase):
+    """
+    Unit tests for initiating a Gerrit connection
+    """
+    def auth_ok(self, reference, auth_mock=None):
+        """
+        Helper method for testing if authentication was done correctly
+        """
+        # pylint: disable=protected-access
+        self.assertEqual(
+            reference._auth.username,
+            self.USERNAME,
+        )
+        self.assertEqual(
+            reference._auth.password,
+            self.PASSWORD,
+        )
+        if auth_mock is not None:
+            auth_mock.assert_called_once_with(self.USERNAME, self.PASSWORD)
 
-    @mock.patch('gerrit.gerrit.HTTPBasicAuth')
-    @mock.patch('gerrit.gerrit.get_netrc_auth')
-    def test_init_with_auth_type_http(self,
-                                      mock_get_netrc_auth, mock_http_basic_auth):
-        """Init with auth_type parameter set to 'http'"""
-        mock_get_netrc_auth.return_value = ('user_found', 'password_found')
-        auth = mock.Mock()
-        auth.username, auth.password = mock_get_netrc_auth()
-
-        reference = Gerrit(url='http://domain.com', auth_type='http')
-
-        mock_http_basic_auth.assert_called_with(auth.username, auth.password)
-
-    @mock.patch('gerrit.gerrit.HTTPBasicAuth')
-    @mock.patch('gerrit.gerrit.get_netrc_auth')
-    def test_init_with_auth_type_http_auth_method_basic(self,
-                                                        mock_get_netrc_auth,
-                                                        mock_http_basic_auth):
-        """Init with auth_type parameter set to 'http' and auth_method set to 'basic'"""
-        mock_get_netrc_auth.return_value = ('user_found', 'password_found')
-        auth = mock.Mock()
-        auth.username, auth.password = mock_get_netrc_auth()
-
-        reference = Gerrit(url='http://domain.com', auth_type='http',
-                               auth_method='basic')
-
-        mock_http_basic_auth.assert_called_with(auth.username, auth.password)
-
-    @mock.patch('gerrit.gerrit.HTTPDigestAuth')
-    @mock.patch('gerrit.gerrit.get_netrc_auth')
-    def test_init_with_auth_type_http_auth_method_digest(self,
-                                                         mock_get_netrc_auth,
-                                                         mock_http_digest_auth):
-        """Init with auth_type parameter set to 'http' and auth_method set to 'digest'"""
-        mock_get_netrc_auth.return_value = ('user_found', 'password_found')
-        auth = mock.Mock()
-        auth.username, auth.password = mock_get_netrc_auth()
-
-        reference = Gerrit(url='http://domain.com', auth_type='http',
-                               auth_method='digest')
-
-        mock_http_digest_auth.assert_called_with(auth.username, auth.password)
-
-    def test_init_with_invalid_auth_type(self):
-        """Init with invalid auth_type 'invalid'"""
-
-        with self.assertRaises(NotImplementedError) as cm:
-            reference = Gerrit(url='http://domain.com', auth_type='invalid')
-        self.assertEqual("Authorization type 'invalid' is not implemented",
-                         str(cm.exception))
-
-    @mock.patch('gerrit.gerrit.get_netrc_auth')
-    def test_init_with_invalid_auth_method(self, mock_get_netrc_auth):
-        """Init with invalid auth_method 'invalid'"""
-        mock_get_netrc_auth.return_value = ('user_found', 'password_found')
-        auth = mock.Mock()
-        auth.username, auth.password = mock_get_netrc_auth()
-
-        with self.assertRaises(NotImplementedError) as cm:
-            reference = Gerrit(url='http://domain.com', auth_method='invalid')
-        self.assertEqual("Authorization method 'invalid' for auth_type 'http' is not implemented",
-                         str(cm.exception))
-
-    @mock.patch('gerrit.gerrit.get_netrc_auth')
-    def test_init_with_netrc(self, mock_get_netrc_auth):
-        # Set up mock
-        mock_get_netrc_auth.return_value = ('user_found', 'password_found')
-
-        # Instantiate gerrit Con
-        reference = Gerrit(url='http://domain.com')
-
-        # Make sure get_netrc_auth is called since we have no specified the credentials
-        self.assertTrue(mock_get_netrc_auth.called,
-                        'Failed to call get_netrc_auth if credentials were not specified.')
-
-        # Check that the _auth HTTPBasicAuth object contains the
-        # given credentials
-
-        self.assertEqual('user_found', reference._auth.username)
-        self.assertEqual('password_found', reference._auth.password)
-
-    @mock.patch('gerrit.gerrit.get_netrc_auth')
-    def test_init_credentials_given(self, mock_get_netrc_auth):
-        # Instantiate gerrit Con
-        reference = Gerrit(url='http://domain.com',
-                           auth_id='user_given',
-                           auth_pw='password_given')
-
-        # Make sure get_netrc_auth is not called since we have given the credentials.
-        self.assertFalse(
-            mock_get_netrc_auth.called,
-            'Failed to not call get_netrc_auth if credentials were given.'
+    def test_no_parameters(self):
+        """
+        Init without any auth parameters
+        """
+        reference = Gerrit(
+            url=self.URL,
         )
 
+        self.auth_ok(reference, self.mock_http_basic_auth)
+
+    def test_type_http(self):
+        """
+        Init with auth_type parameter set to 'http'
+        """
+        reference = Gerrit(
+            url=self.URL,
+            auth_type='http',
+        )
+
+        self.auth_ok(reference, self.mock_http_basic_auth)
+
+    def test_type_http_method_basic(self):
+        """
+        Init with auth_type parameter set to 'http' and auth_method set to 'basic'
+        """
+        reference = Gerrit(
+            url=self.URL,
+            auth_type='http',
+            auth_method='basic',
+        )
+
+        self.auth_ok(reference, self.mock_http_basic_auth)
+
+    def test_type_http_method_digest(self):
+        """
+        Init with auth_type parameter set to 'http' and auth_method set to 'digest'
+        """
+        reference = Gerrit(
+            url=self.URL,
+            auth_type='http',
+            auth_method='digest',
+        )
+
+        self.auth_ok(reference, self.mock_http_digest_auth)
+
+    def test_invalid_type(self):
+        """
+        Init with invalid auth_type 'invalid'
+        """
+        with self.assertRaises(NotImplementedError) as err:
+            Gerrit(url=self.URL, auth_type='invalid')
+        self.assertEqual("Authorization type 'invalid' is not implemented", str(err.exception))
+
+    def test_invalid_method(self):
+        """
+        Init with invalid auth_method 'invalid'
+        """
+        with self.assertRaises(NotImplementedError) as err:
+            Gerrit(url=self.URL, auth_method='invalid')
+        self.assertEqual(
+            "Authorization method 'invalid' for auth_type 'http' is not implemented",
+            str(err.exception),
+        )
+
+    def test_netrc(self):
+        """
+        Test that netrc is used if no credentials are specified
+        """
+        # Instantiate gerrit Con
+        reference = Gerrit(url=self.URL)
+
+        # Make sure get_netrc_auth is called since we have no specified the credentials
+        self.mock_get_netrc_auth.assert_called_with(self.URL)
+
         # Check that the _auth HTTPBasicAuth object contains the
         # given credentials
+        self.auth_ok(reference)
 
-        self.assertEqual('user_given', reference._auth.username)
-        self.assertEqual('password_given', reference._auth.password)
+    def test_credentials(self):
+        """
+        Test that netrc is not used when credentials are specified
+        """
+        # Instantiate gerrit Con
+        reference = Gerrit(
+            url=self.URL,
+            auth_id=self.USERNAME,
+            auth_pw=self.PASSWORD,
+        )
 
-    @mock.patch('gerrit.gerrit.get_netrc_auth')
-    def test_init_credentials_not_found(self, mock_get_netrc_auth):
+        # Make sure get_netrc_auth is not called since we have given the credentials.
+        self.mock_get_netrc_auth.assert_not_called()
+
+        # Check that the _auth HTTPBasicAuth object contains the
+        # given credentials
+        self.auth_ok(reference)
+
+    def test_credentials_not_found(self):
+        """
+        Test that is raises if netrc credentials can not be found
+        """
         # Set up mock
-        mock_get_netrc_auth.return_value = False
+        self.mock_get_netrc_auth.return_value = False
 
         # Instantiate gerrit Con
         with self.assertRaises(CredentialsNotFound):
-            reference = Gerrit(url='http://domain.com')
+            Gerrit(
+                url=self.URL,
+            )
 
         # Make sure get_netrc_auth is not called since we have given the credentials.
-        self.assertTrue(mock_get_netrc_auth.called,
-                        'Failed to call get_netrc_auth if credentials were not given.')
+        self.mock_get_netrc_auth.assert_called_once_with(self.URL)
 
-    @mock.patch('gerrit.gerrit.get_netrc_auth')
-    def test_init_partialAuth_id_given(self, mock_get_netrc_auth):
+    def test_partial_id_given(self):
+        """
+        Test that it raises if only username is specified
+        """
         # Instantiate gerrit Con
         with self.assertRaises(CredentialsNotFound):
-            reference = Gerrit(url='http://domain.com',
-                               auth_id='user_given')
+            Gerrit(
+                url=self.URL,
+                auth_id=self.USERNAME,
+            )
 
         # Make sure get_netrc_auth is not called since we have given the credentials.
-        self.assertFalse(mock_get_netrc_auth.called,
-                         'Failed to not call get_netrc_auth if credentials were given.')
+        self.mock_get_netrc_auth.assert_not_called()
 
-    @mock.patch('gerrit.gerrit.get_netrc_auth')
-    def test_init_partialAuth_pw_given(self, mock_get_netrc_auth):
+    def test_partial_pw_given(self):
+        """
+        Test that it raises if only password is specified
+        """
         # Instantiate gerrit Con
         with self.assertRaises(CredentialsNotFound):
-            reference = Gerrit(url='http://domain.com',
-                               auth_pw='pass_given')
+            Gerrit(
+                url=self.URL,
+                auth_pw=self.PASSWORD,
+            )
 
         # Make sure get_netrc_auth is not called since we have given the credentials.
-        self.assertFalse(mock_get_netrc_auth.called,
-                         'Failed to not call get_netrc_auth if credentials were given.')
+        self.mock_get_netrc_auth.assert_not_called()
 
 
-class GerritRevisionTestCase(unittest.TestCase):
-    @mock.patch('gerrit.gerrit.get_netrc_auth')
-    def test_get_revision(self, mock_get_netrc_auth):
-        mock_get_netrc_auth.return_value = ('user', 'password')
-        reference = Gerrit(url='http://domain.com')
+class GerritRevisionTestCase(GerritTestCase):
+    """
+    Unit tests for getting a revision
+    """
+    def test_get_revision(self):
+        """
+        Test that a revision can be fetched
+        """
+        reference = Gerrit(url=self.URL)
         revision = reference.get_revision('my-revision')
         self.assertIsInstance(revision, Revision)
 
 
-class GerritProjectTestCase(unittest.TestCase):
-    @mock.patch('gerrit.gerrit.get_netrc_auth')
-    def test_create_project(self, mock_get_netrc_auth):
-        mock_get_netrc_auth.return_value = ('user', 'password')
-        req = mock.Mock()
-        req.status_code = 201
-        req.content = ')]}\'{}'.encode('utf-8')
-        call = mock.Mock()
-        call.return_value = req
+class GerritProjectTestCase(GerritTestCase):
+    """
+    Unit tests for projects
+    """
+    def setUp(self):
+        super().setUp()
+        self.req = mock.Mock()
+        self.req.status_code = 200
+        self.req.content = self.build_response({})
+        self.call = mock.Mock()
+        self.call.return_value = self.req
 
-        reference = Gerrit(url='http://domain.com')
-        reference.call = call
+    def test_create_project(self):
+        """
+        Test that a project can be created
+        """
+        self.req.status_code = 201
+        reference = Gerrit(url=self.URL)
+        reference.call = self.call
         with mock.patch.object(Project, 'get_project'):
-            project = reference.create_project('gerritproject')
-            call.assert_called_with(
+            reference.create_project(self.PROJECT)
+            self.call.assert_called_with(
                 request='put',
-                r_endpoint='/a/projects/gerritproject',
+                r_endpoint='/a/projects/{}'.format(self.PROJECT),
                 r_payload={},
             )
 
-    @mock.patch('gerrit.gerrit.get_netrc_auth')
-    def test_get_project(self, mock_get_netrc_auth):
-        mock_get_netrc_auth.return_value = ('user', 'password')
-        req = mock.Mock()
-        req.status_code = 200
-        req.content = ')]}\'{}'.encode('utf-8')
-        call = mock.Mock()
-        call.return_value = req
-
-        reference = Gerrit(url='http://domain.com')
-        reference.call = call
-        project = reference.get_project('gerritproject')
-        call.assert_called_with(
-            r_endpoint='/a/projects/gerritproject/',
+    def test_get_project(self):
+        """
+        Test that a project can be fetched
+        """
+        reference = Gerrit(url=self.URL)
+        reference.call = self.call
+        reference.get_project(self.PROJECT)
+        self.call.assert_called_with(
+            r_endpoint='/a/projects/{}/'.format(self.PROJECT),
         )
 
 
-class GerritChangeTestCase(unittest.TestCase):
-    @mock.patch('gerrit.gerrit.get_netrc_auth')
-    @mock.patch('gerrit.gerrit.requests.post')
-    @mock.patch('gerrit.gerrit.requests.get')
-    def test_create_change(self, mock_get, mock_post, mock_get_netrc_auth):
-        mock_get_netrc_auth.return_value = ('user', 'password')
-        post = mock.Mock()
-        post.status_code = 201
-        post.content = ')]}\'{"change_id": "I01440b5fd46a67ee38c9ef2c22eb145b8547cbb2"}'.encode('utf-8')
-        mock_post.return_value = post
+class GerritChangeTestCase(GerritTestCase):
+    """
+    Unit tests for changes
+    """
+    def setUp(self):
+        super().setUp()
+        self.mock_post = mock.patch('gerrit.gerrit.requests.post').start()
+        self.post = mock.Mock()
+        self.post.status_code = 201
+        self.post.content = self.build_response(
+            {
+                "change_id": self.CHANGE_ID,
+            }
+        )
+        self.mock_post.return_value = self.post
 
-        get = mock.Mock()
-        get.status_code = 200
-        get.content = ')]}\'{}'.encode('utf-8')
-        mock_get.return_value = get
+        self.mock_get = mock.patch('gerrit.gerrit.requests.get').start()
+        self.get = mock.Mock()
+        self.get.status_code = 200
+        self.get.content = self.build_response({})
+        self.mock_get.return_value = self.get
 
-        reference = Gerrit(url='http://domain.com')
-        change = reference.create_change('gerritproject', 'change status')
+    def test_create_change(self):
+        """
+        Test that a change can be created
+        """
+        reference = Gerrit(url=self.URL)
+        change = reference.create_change(self.PROJECT, 'change status')
         self.assertIsInstance(change, Change)
-        mock_post.assert_called_with(
+        self.mock_post.assert_called_with(
             auth=mock.ANY,
             headers=mock.ANY,
             json=mock.ANY,
-            url='http://domain.com/a/changes/'
+            url='{}/a/changes/'.format(self.URL)
         )
 
-    @mock.patch('gerrit.gerrit.get_netrc_auth')
-    @mock.patch('gerrit.gerrit.requests.get')
-    def test_get_change(self, mock_get, mock_get_netrc_auth):
-        mock_get_netrc_auth.return_value = ('user', 'password')
-        get = mock.Mock()
-        get.status_code = 200
-        get.content = (
-            ')]}\''
-            '{"name": "gerritproject", '
-            '"parent": "All-Projects", '
-            '"description": "My gerrit project", '
-            '"state": "ACTIVE"}').encode('utf-8')
-        mock_get.return_value = get
+    def test_get_change(self):
+        """
+        Test that a change can be fetched
+        """
+        self.get.content = self.build_response(
+            {
+                "name": self.PROJECT,
+                "parent": self.PARENT,
+                "description": self.DESCRIPTION,
+                "state": self.STATE,
+            }
+        )
 
-        reference = Gerrit(url='http://domain.com')
-        change = reference.get_change('gerritproject', 'change id')
+        reference = Gerrit(url=self.URL)
+        change = reference.get_change(self.PROJECT, self.CHANGE_ID)
         self.assertIsInstance(change, Change)
-        mock_get.assert_called_with(
+        self.mock_get.assert_called_with(
             auth=mock.ANY,
             headers=mock.ANY,
             json=mock.ANY,
-            url='http://domain.com/a/changes/gerritproject%7Emaster%7Echange%20id/'
+            url='{}/a/changes/{}%7E{}%7E{}/'.format(
+                self.URL,
+                self.PROJECT,
+                self.BRANCH,
+                self.CHANGE_ID,
+            )
         )
 
 
 class GerritError(unittest.TestCase):
-    """Tests for gerrit/error.py"""
+    """
+    Unit tests for errors
+    """
 
     def test_exception_has_message(self):
-        """Exceptions should have messages"""
-
-        with self.assertRaises(CredentialsNotFound) as cm:
+        """
+        Exceptions should have messages
+        """
+        with self.assertRaises(CredentialsNotFound) as err:
             raise CredentialsNotFound("Test message")
-        self.assertEqual("Test message", str(cm.exception))
-
-
-def main():
-    unittest.main()
-
-
-if __name__ == '__main__':
-    main()
+        self.assertEqual("Test message", str(err.exception))
